@@ -118,6 +118,13 @@ int main(void)
     MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
+
+    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 1);
+    HAL_Delay(1000);
+    HAL_GPIO_WritePin(GPIOD, GPIO_PIN_13, 0);
+    HAL_Delay(1000);
+
+
   }
   /* USER CODE END 3 */
 }
