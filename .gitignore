@@ -1,0 +1,10 @@
+Drivers/*
+Middlewares/*
+USB_HOST/*
+.settings/
+.cproject
+.mxproject
+.project
+*.ld
+*.s
+*.o
