@@ -5,6 +5,10 @@
 #include "stm32f4xx.h"
 
 
+
+
+
+
 void I2C_Scan(I2C_HandleTypeDef *hi2c);
 
 int I2C_Is_Attached(I2C_HandleTypeDef *hi2c, uint8_t add);
@@ -20,4 +24,43 @@ uint8_t I2C_Read_SReg(I2C_HandleTypeDef *hi2c, uint8_t i2c_7bit_add, uint8_t reg
 //void SPI_Read_Reg(SPI_HandleTypeDef *hspi, GPIO_PIN *cs, uint8_t reg_add, uint8_t *buffer, uint16_t size);
 //uint8_t SPI_Read_SReg(SPI_HandleTypeDef *hspi, GPIO_PIN *cs, uint8_t reg_add);
 
+
+
+
+int _write(int file, char *ptr, int len);
+
+
+void printDebug(char *__restrict info, ...);
+
+void printDebugInt(int aux)
+{
+	char str[10];
+	sprintf(str, "%d", aux);
+	int i = 0;
+	while (str[i] != '\0') {
+		i++;
+	}
+	_write(0, str, i);
+}
+
+
+void printDebugIntHex(int aux) {
+	char str[10];
+	sprintf(str, "%X", aux);
+	int i = 0;
+	while (str[i] != '\0') {
+		i++;
+	}
+	_write(0, str, i);
+}
+
+void printDebugFloat(float aux) {
+	char str[10];
+	sprintf(str, "%f", aux);
+	int i = 0;
+	while (str[i] != '\0') {
+		i++;
+	}
+	_write(0, str, i);
+}
 

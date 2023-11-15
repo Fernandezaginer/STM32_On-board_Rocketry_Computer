@@ -117,3 +117,67 @@ uint8_t I2C_Read_SReg(I2C_HandleTypeDef *hi2c, uint8_t i2c_7bit_add,
 //	return buffer;
 //}
 
+
+
+
+
+
+
+//----------------------------------------------------------
+//                 DEBUG  SWD  TRACE
+//----------------------------------------------------------
+
+
+
+
+int _write(int file, char *ptr, int len) {
+	int DataIdx;
+	for (DataIdx = 0; DataIdx < len; DataIdx++) {
+		ITM_SendChar(*ptr++);
+	}
+	return len;
+}
+
+
+
+void printDebug(char *__restrict info, ...) {
+	int i = 0;
+	while (info[i] != '\0') {
+		i++;
+	}
+	_write(0, info, i);
+
+}
+
+
+void printDebugInt(int aux) {
+	char str[10];
+	sprintf(str, "%d", aux);
+	int i = 0;
+	while (str[i] != '\0') {
+		i++;
+	}
+	_write(0, str, i);
+}
+
+
+void printDebugIntHex(int aux) {
+	char str[10];
+	sprintf(str, "%X", aux);
+	int i = 0;
+	while (str[i] != '\0') {
+		i++;
+	}
+	_write(0, str, i);
+}
+
+void printDebugFloat(float aux) {
+	char str[10];
+	sprintf(str, "%f", aux);
+	int i = 0;
+	while (str[i] != '\0') {
+		i++;
+	}
+	_write(0, str, i);
+}
+
