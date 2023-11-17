@@ -31,36 +31,8 @@ int _write(int file, char *ptr, int len);
 
 
 void printDebug(char *__restrict info, ...);
+void printDebugInt(int aux);
+void printDebugIntHex(int aux);
+void printDebugFloat(float aux);
 
-void printDebugInt(int aux)
-{
-	char str[10];
-	sprintf(str, "%d", aux);
-	int i = 0;
-	while (str[i] != '\0') {
-		i++;
-	}
-	_write(0, str, i);
-}
-
-
-void printDebugIntHex(int aux) {
-	char str[10];
-	sprintf(str, "%X", aux);
-	int i = 0;
-	while (str[i] != '\0') {
-		i++;
-	}
-	_write(0, str, i);
-}
-
-void printDebugFloat(float aux) {
-	char str[10];
-	sprintf(str, "%f", aux);
-	int i = 0;
-	while (str[i] != '\0') {
-		i++;
-	}
-	_write(0, str, i);
-}
 
