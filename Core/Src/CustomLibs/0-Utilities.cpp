@@ -114,42 +114,42 @@ uint8_t I2C_Read_SReg(I2C_HandleTypeDef *hi2c, uint8_t i2c_7bit_add,
 //                    SPI UTILITIES
 //----------------------------------------------------------
 
-void SPI_Write_Reg(SPI_HandleTypeDef *hspi, GPIO_PIN *cs, uint8_t reg_add, uint8_t val) {
-	uint8_t data[2] = {};
-	cs->setLow();
-	data[0] = reg_add & 0B01111111;
-	data[1] = val;
-	HAL_SPI_Transmit(hspi, data, 2, 100);
-	cs->setHigh();
-}
-void SPI_Write_MReg(SPI_HandleTypeDef *hspi, GPIO_PIN *cs, uint8_t reg_add, uint8_t *val, uint8_t nbytes) {
-	uint8_t *data;
-	cs->setLow();
-	data = (uint8_t*) malloc((nbytes + 1) * sizeof(uint8_t));
-	data[0] = reg_add & 0b01111111;
-	for (int i = 0; i < nbytes; i++) {
-		data[1 + i] = val[i];
-	}
-	HAL_SPI_Transmit(hspi, data, nbytes + 1, 100);
-	cs->setHigh();
-	free(data);
-}
-void SPI_Read_Reg(SPI_HandleTypeDef *hspi, GPIO_PIN *cs, uint8_t reg_add, uint8_t *buffer, uint16_t size) {
-	cs->setLow();
-	uint8_t reg = reg_add | 0B10000000;
-	HAL_SPI_Transmit(hspi, &reg, 1, 100);
-	HAL_SPI_Receive(hspi, buffer, size, 100);
-	cs->setHigh();
-}
-uint8_t SPI_Read_SReg(SPI_HandleTypeDef *hspi, GPIO_PIN *cs, uint8_t reg_add) {
-	cs->setLow();
-	uint8_t buffer;
-	uint8_t reg = reg_add | 0B10000000;
-	HAL_SPI_Transmit(hspi, &reg, 1, 100);
-	HAL_SPI_Receive(hspi, &buffer, 1, 100);
-	cs->setHigh();
-	return buffer;
-}
+//void SPI_Write_Reg(SPI_HandleTypeDef *hspi, GPIO_PIN *cs, uint8_t reg_add, uint8_t val) {
+//	uint8_t data[2] = {};
+//	cs->setLow();
+//	data[0] = reg_add & 0B01111111;
+//	data[1] = val;
+//	HAL_SPI_Transmit(hspi, data, 2, 100);
+//	cs->setHigh();
+//}
+//void SPI_Write_MReg(SPI_HandleTypeDef *hspi, GPIO_PIN *cs, uint8_t reg_add, uint8_t *val, uint8_t nbytes) {
+//	uint8_t *data;
+//	cs->setLow();
+//	data = (uint8_t*) malloc((nbytes + 1) * sizeof(uint8_t));
+//	data[0] = reg_add & 0b01111111;
+//	for (int i = 0; i < nbytes; i++) {
+//		data[1 + i] = val[i];
+//	}
+//	HAL_SPI_Transmit(hspi, data, nbytes + 1, 100);
+//	cs->setHigh();
+//	free(data);
+//}
+//void SPI_Read_Reg(SPI_HandleTypeDef *hspi, GPIO_PIN *cs, uint8_t reg_add, uint8_t *buffer, uint16_t size) {
+//	cs->setLow();
+//	uint8_t reg = reg_add | 0B10000000;
+//	HAL_SPI_Transmit(hspi, &reg, 1, 100);
+//	HAL_SPI_Receive(hspi, buffer, size, 100);
+//	cs->setHigh();
+//}
+//uint8_t SPI_Read_SReg(SPI_HandleTypeDef *hspi, GPIO_PIN *cs, uint8_t reg_add) {
+//	cs->setLow();
+//	uint8_t buffer;
+//	uint8_t reg = reg_add | 0B10000000;
+//	HAL_SPI_Transmit(hspi, &reg, 1, 100);
+//	HAL_SPI_Receive(hspi, &buffer, 1, 100);
+//	cs->setHigh();
+//	return buffer;
+//}
 
 
 

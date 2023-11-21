@@ -1,32 +1,90 @@
 
+
+#include "stdio.h"
 #include "stm32f4xx.h"
 #include "0-Utilities.h"
 
 
-#ifndef _SERVO_H_
-#define _SERVO_H_
+#ifndef _EEPROM_H_
+#define _EEPROM_H_
 
-#define FREQ_PRESCALER 1000000
-#define FREQ_SERVO 50
-#define ARR_REG 36000
-
-
-typedef struct{
-	TIM_HandleTypeDef* tim_handle;
-	uint16_t tim_chanel;
-}SERVO_PIN;
+#define EEPROM_N_BYTES 65536     // 24FC512
+#define EEPROM_I2C_ADDRESS 0x50
 
 
 class EEPROM{
 public:
-	void Setup();
-	void Check();
-	void Clear();
-	void Write();
-	void Read();
+
+
+	// Configuración de la EEPROM I2C
+	bool Setup();
+
+
+
+	// Funcion de configuracion de la unidad de escritura (numero de datos a guardar)
+	void ConfigUnitSave(uint8_t n_float, uint8_t n_uint32_t, uint8_t n_int32_t, uint8_t n_uint16_t, uint8_t n_int16_t, uint8_t n_uint8_t, uint8_t n_int8_t);
+
+	// Funcion para definir el puntero de guardado de datos
+	void ConfigPointerSave(uint8_t* pointer);
+
+	// Funcion para configurar la lectura del tiempo
+	void ConfigPointerTime(uint32_t* hal_tick);
+
+	// Funcion para definir la velocidad de escritura en cada etapa
+	void ConfigSpace(float despege, float aterrizaje, uint32_t t_vuelo, uint32_t t_caida);
+
+
+	// Funcion para el guardado de datos si procede
+	void loop();
+
+
+
+	// -----------  API -----------------
+
+	void PrintDebug();
+
+
 private:
+	uint8_t n_bytes_save = 0;
+
+	uint8_t n_float;
+	uint8_t n_uint32_t;
+	uint8_t n_int32_t;
+	uint8_t n_uint16_t;
+	uint8_t n_int16_t;
+	uint8_t n_uint8_t;
+	uint8_t n_int8_t;
+	uint8_t n_bytes;
+	uint8_t* pointer;
+	uint32_t* hal_tick;
+
+
+
+	I2C_HandleTypeDef* hi2c;
+
+	float despege;
+	float aterrizaje;
+	uint32_t t_vuelo;
+	uint32_t t_caida;
+
+
+	void writeEEPROM_Page(uint16_t address, uint8_t *val, uint8_t tam);
+
+	void float_to_4byte(float* var, uint8_t* aux);
+	void _4byte_to_float(uint8_t* aux, float *out);
+	void uint16_to_2byte(uint16_t dato_in, uint8_t* dir_dato_out);
+
 
 };
+
+
+
+
+
+
+
+
+
 
 
 #endif
