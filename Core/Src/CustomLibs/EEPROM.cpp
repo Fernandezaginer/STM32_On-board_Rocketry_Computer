@@ -32,27 +32,23 @@ void EEPROM::ConfigPointerSave(uint8_t* pointer){
 }
 
 
-void EEPROM::ConfigPointerTime(uint32_t* hal_tick){
-	this->hal_tick = hal_tick;
+void EEPROM::ConfigPointerTime(uint32_t* flight_time){
+	this->flight_time = flight_time;
 }
 
 
-void EEPROM::ConfigSpace(float despege, float aterrizaje, uint32_t t_vuelo, uint32_t t_caida){
-	this->despege = despege;
-	this->aterrizaje = aterrizaje;
-	this->t_vuelo = t_vuelo;
-	this->t_caida = t_caida;
+void EEPROM::ConfigSpace(float despegue, float aterrizaje, uint32_t t_vuelo, uint32_t t_caida){
+	this->t_despegue = t_vuelo;
+	this->t_aterrizaje = t_caida;
 
-	// Calcular el número de celdas
-
-
+	// Calcular el número de unidades de escritura
+	n_despegue = (uint32_t) ((EEPROM_N_BYTES/n_bytes) * despegue);
+	n_aterrizaje = (uint32_t) ((EEPROM_N_BYTES/n_bytes) * aterrizaje);
+	intervalo_despegue = t_despegue / n_despegue;
+	//intervalo_aterrizaje =
+	n_ud_maximas = (uint32_t)(EEPROM_N_BYTES/n_bytes);
 }
 
-
-
-void EEPROM::loop(){
-
-}
 
 
 
@@ -80,6 +76,76 @@ void EEPROM::writeEEPROM_Page(uint16_t address, uint8_t *val, uint8_t tam) {
 
 
 
+
+
+// -----------  API -----------------
+
+
+
+void EEPROM::loop(bool despegue, bool caida){
+	if (despegue){
+
+		// Realizar lectura si ha pasado el tiempo correspondiente
+		// (La eeprom tiene 64 Kb, sirve para poner un límite)
+		if(intervalo_despegue*n_ud_esctiras < * flight_time){
+			// Escribir los valores
+
+//			if(n_ud_escritas+1<n_ud_maximas){
+//				writeEEPROM_Page((uint8_t)(n_ud_escritas*n_bytes), this->pointer, n_bytes);
+//				n_ud_esctiras++;
+//			}
+		}
+
+
+	}
+	else if(caida){
+
+		// Realizar lectura si ha pasado el tiempo correspondiente
+		// (La eeprom tiene 64 Kb, sirve para poner un límite)
+		if(intervalo_despegue*n_ud_esctiras < * flight_time){
+			// Escribir los valores
+
+//			if(n_ud_escritas+1<n_ud_maximas){
+//				writeEEPROM_Page((uint8_t)(n_ud_escritas*n_bytes), this->pointer, n_bytes);
+//				n_ud_esctiras++;
+//			}
+		}
+
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+// -----------  API -----------------
+
+void EEPROM::PrintDebug(){
+
+}
+
+
+
+void EEPROM::Sd_Save(){
+
+}
+
+
+
+
+
+
+// ---------- CONVERT FNC -----------
+
+
 void EEPROM::float_to_4byte(float* var, uint8_t* aux) {
   uint8_t* p = (uint8_t*)var;
   for (char i = 3; i >= 0; i--) {
@@ -105,43 +171,5 @@ void EEPROM::uint16_to_2byte(uint16_t dato_in, uint8_t* dir_dato_out) {
   *(dir_dato_out) = (uint8_t)(dato_in >> 8);
   *(dir_dato_out + 1) = (uint8_t)dato_in;
 }
-
-
-
-
-
-// -----------  API -----------------
-
-void EEPROM::PrintDebug(){
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

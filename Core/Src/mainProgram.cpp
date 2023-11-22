@@ -93,6 +93,10 @@ void setup(){
 	cierre_paracaidas();
 
 
+
+
+
+
 	// Comprobar el funcionamiento de los modulos
 	if(test_modulos()){
 
