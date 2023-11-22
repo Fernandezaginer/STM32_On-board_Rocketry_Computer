@@ -4,6 +4,9 @@
 #include "CustomLibs/0-Utilities.h"
 #include "CustomLibs/Servo.h"
 #include "CustomLibs/EEPROM.h"
+#include "CustomLibs/PRESION.h"
+//#include "CustomLibs/GPS.h"
+#include "CustomLibs/SD.h"
 
 
 

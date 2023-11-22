@@ -1,6 +1,3 @@
-// "Servo.cpp"
-// Library for servomotors
-// 4ALLBOT - Prueba Test PCB Servomotores NOV 2022
 
 #include "CustomLibs/Servo.h"
 #include "stm32f4xx.h"

@@ -15,12 +15,12 @@ Lista de dispositivos: <br>
 
 BOTON ON/OF => Grabación de datos <br>
 
-GPS          Andres <br>
-SERVO        Andres <br>
-SD -> SDIO   Andres <br>
-EEPROM I2C   Andres <br>
+GPS             Andres <br>
+SERVO           Andres <br>
+SD -> SDIO      Andres <br>
+EEPROM I2C      Andres <br>
+PRESION BMP280  Andres <br>
 
-PRESION <br>
 Acc/Gyr <br>
 Temperatura <br>
 DHT11 <br>

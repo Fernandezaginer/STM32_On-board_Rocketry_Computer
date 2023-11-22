@@ -29,6 +29,9 @@ file.write(s)
 file.close()
 
 
+os.system("PAUSE")
+
+
 
 
 
