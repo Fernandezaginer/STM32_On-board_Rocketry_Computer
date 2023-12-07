@@ -60,6 +60,8 @@ bool fin_alarma = false;
 //-------------------------------------------------
 Servo paracaidas;
 SERVO_PIN servo_pin = {&htim1, TIM_CHANNEL_1};
+Bmp280 s_presion = *(new Bmp280(&hi2c2));
+EEPROM eeprom = *(new EEPROM(&hi2c3));
 
 
 
@@ -92,8 +94,32 @@ void read_save_data();
 void setup(){
 
 
-	// Cerrar el paracaidas
+	// Inicializar sensores:
 	cierre_paracaidas();
+	s_presion.init();
+
+
+	// Cerrar el paracaidas
+
+	// Test unitario BMP
+	printDebug("\nTemperatura: ");
+	printDebugFloat(s_presion.getTemperature());
+	printDebug("\nPresion: ");
+	printDebugFloat(s_presion.getPressure());
+	printDebug("\nAltitud: ");
+	printDebugFloat(s_presion.getAltitude());
+
+
+
+	for(int i = 0; i < 5; i++){
+		HAL_Delay(2000);
+		apertura_paracaidas();
+		HAL_Delay(2000);
+		cierre_paracaidas();
+	}
+
+	while(true){}
+	//Error_Handler();
 
 
 

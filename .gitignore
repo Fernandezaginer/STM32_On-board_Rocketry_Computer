@@ -8,3 +8,4 @@ USB_HOST/*
 *.ld
 *.s
 *.o
+*.launch

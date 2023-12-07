@@ -8,6 +8,12 @@
 
 
 
+EEPROM::EEPROM(I2C_HandleTypeDef* hi2c){
+	this->hi2c = hi2c;
+}
+
+
+
 bool EEPROM::Setup(){
 
 	// Init I2C

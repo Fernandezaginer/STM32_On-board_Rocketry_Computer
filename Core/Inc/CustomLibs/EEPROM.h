@@ -15,6 +15,7 @@
 class EEPROM{
 public:
 
+	EEPROM(I2C_HandleTypeDef* hi2c);
 
 	// Configuración de la EEPROM I2C
 	bool Setup();
