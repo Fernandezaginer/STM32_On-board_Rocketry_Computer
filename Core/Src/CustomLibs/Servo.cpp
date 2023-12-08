@@ -10,15 +10,20 @@
 
 
 
-void Servo::setup(SERVO_PIN servo_pin){
-	this->tim_handle = servo_pin.tim_handle;
-	this->tim_chanel = servo_pin.tim_chanel;
+void Servo::setup(SERVO_PIN* servo_pin){
+	this->tim_handle = servo_pin->tim_handle;
+	this->tim_chanel = servo_pin->tim_chanel;
 	//__HAL_TIM_SET_AUTORELOAD(this->tim_handle, ARR_REG);
 }
 
 bool Servo::attach(){
-	HAL_TIM_PWM_Start(tim_handle, tim_chanel);
-	return true;
+	tim_handle->State = HAL_TIM_STATE_READY;
+	if(HAL_TIM_PWM_Start(tim_handle, tim_chanel) != HAL_OK){
+		return false;
+	}
+	else{
+		return true;
+	}
 }
 
 

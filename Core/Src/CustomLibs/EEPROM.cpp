@@ -15,8 +15,7 @@ EEPROM::EEPROM(I2C_HandleTypeDef* hi2c){
 
 
 bool EEPROM::Setup(){
-
-	// Init I2C
+	return I2C_Is_Attached(hi2c, EEPROM_I2C_ADDRESS);
 }
 
 

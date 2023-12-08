@@ -66,6 +66,12 @@ EEPROM eeprom = *(new EEPROM(&hi2c3));
 
 
 
+
+
+// Lecturas:
+//uint8_t lec = (uint8_t*)malloc(20*sizeof(uint8_t));
+
+
 // led error
 // led ok
 
@@ -99,9 +105,20 @@ void setup(){
 	s_presion.init();
 
 
-	// Cerrar el paracaidas
+	//  Buscar direcciones I2C
+	I2C_Scan(&hi2c2);
+	I2C_Scan(&hi2c3);
 
-	// Test unitario BMP
+	// Test unitario EEPROM
+	if (eeprom.Setup() == true){
+		printDebug("\nEEPROM OK");
+	}
+	else{
+		printDebug("\nEEPROM NOT FOUND");
+	}
+
+
+	// Test unitario BMP OK
 	printDebug("\nTemperatura: ");
 	printDebugFloat(s_presion.getTemperature());
 	printDebug("\nPresion: ");
@@ -111,6 +128,7 @@ void setup(){
 
 
 
+	// Test unitario Servo:
 	for(int i = 0; i < 5; i++){
 		HAL_Delay(2000);
 		apertura_paracaidas();
@@ -118,8 +136,44 @@ void setup(){
 		cierre_paracaidas();
 	}
 
-	while(true){}
-	//Error_Handler();
+
+
+
+
+
+	// Configurar EEPROM:
+
+
+//	// Configuración de la EEPROM I2C
+//	bool Setup();
+//
+//
+//
+//	// Funcion de configuracion de la unidad de escritura (numero de datos a guardar)
+//	void ConfigUnitSave(uint8_t n_float, uint8_t n_uint32_t, uint8_t n_int32_t, uint8_t n_uint16_t, uint8_t n_int16_t, uint8_t n_uint8_t, uint8_t n_int8_t);
+//
+//	// Funcion para definir el puntero de guardado de datos
+//	void ConfigPointerSave(uint8_t* pointer);
+//
+//	// Funcion para configurar la lectura del tiempo
+//	void ConfigPointerTime(uint32_t* flight_time);
+//
+//	// Funcion para definir la velocidad de escritura en cada etapa
+//	void ConfigSpace(float despegue, float aterrizaje, uint32_t t_vuelo, uint32_t t_caida);
+//
+//
+//	// Funcion para el guardado de datos si procede
+//	void loop(bool despegue, bool caida);
+//
+//
+//
+//	// -----------  API -----------------
+//
+//	void PrintDebug();
+//
+//	void Sd_Save();
+
+
 
 
 
@@ -195,7 +249,7 @@ void loop(){
 
 
 void cierre_paracaidas(){
-	paracaidas.setup(servo_pin);
+	paracaidas.setup(&servo_pin);
 	paracaidas.attach();
 	paracaidas.write(0);
 }
