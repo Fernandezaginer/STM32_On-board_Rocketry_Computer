@@ -13,7 +13,7 @@
 
 #define FREQ_PRESCALER 1000000
 #define FREQ_SERVO 50
-#define ARR_REG 36000
+#define ARR_REG 20000
 
 
 typedef struct{
@@ -24,7 +24,7 @@ typedef struct{
 
 class Servo{
 public:
-	void setup(SERVO_PIN);
+	void setup(SERVO_PIN*);
 	bool attach();
 	void write(int);
 	void write(float);

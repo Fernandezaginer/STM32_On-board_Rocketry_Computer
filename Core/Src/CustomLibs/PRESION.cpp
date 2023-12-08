@@ -121,6 +121,7 @@ float Bmp280::getAltitude(){
     float pressure = this->getPressure();
     pressure /= 100.0;
     altitude = 44330 * (1.0 - pow(pressure / seaLevelhPa, 0.1903));
+    return altitude;
 }
 
 
