@@ -1,7 +1,4 @@
-Core/*
-Drivers/*
-Middlewares/*
-USB_HOST/*
+*/*
 makefile
 *.list
 *.mk

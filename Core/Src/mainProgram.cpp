@@ -1,11 +1,14 @@
 
 
-#include <mainProgram.h>
+#include <CustomLibs/FileHandling.h>
+#include "mainProgram.h"
+#include "fatfs.h"
 #include "CustomLibs/0-Utilities.h"
 #include "CustomLibs/Servo.h"
 #include "CustomLibs/EEPROM.h"
 #include "CustomLibs/PRESION.h"
-//#include "CustomLibs/GPS.h"
+#include "CustomLibs/Serial.h"
+#include "CustomLibs/GPS.h"
 #include "CustomLibs/SD.h"
 
 
@@ -55,6 +58,7 @@ bool fin_alarma = false;
 
 
 
+
 //-------------------------------------------------
 //            Sensores y actuadores
 //-------------------------------------------------
@@ -62,10 +66,7 @@ Servo paracaidas;
 SERVO_PIN servo_pin = {&htim1, TIM_CHANNEL_1};
 Bmp280 s_presion = *(new Bmp280(&hi2c2));
 EEPROM eeprom = *(new EEPROM(&hi2c3));
-
-
-
-
+extern GPS_t GPS;
 
 
 // Lecturas:
@@ -74,9 +75,6 @@ EEPROM eeprom = *(new EEPROM(&hi2c3));
 
 // led error
 // led ok
-
-
-
 
 // Mediciones sensores:
 float Altitud_BMP = 0.0;
@@ -87,10 +85,29 @@ float Altitud_BMP = 0.0;
 
 
 
+//----------------------------------------------------------
+//                       Funciones
+//----------------------------------------------------------
+
 void cierre_paracaidas();
 void apertura_paracaidas();
 bool test_modulos();
 void read_save_data();
+
+
+
+
+
+//----------------------------------------------------------
+//                       Callbacks
+//----------------------------------------------------------
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart == &huart1) GPS_UART_CallBack();
+}
+
+
 
 
 //-------------------------------------------------
@@ -103,13 +120,33 @@ void setup(){
 	// Inicializar sensores:
 	cierre_paracaidas();
 	s_presion.init();
+	GPS_Init();
+
+
+	// Test unitario SD
+//	Mount_SD("");
+//	Format_SD();
+//	Create_File("FILEA.TXT");
+//	Create_File("FILEB.TXT");
+//	Unmount_SD("");
+
+
+	// Test unitario GPS OK
+	for(int i = 0; i < 20; i++){
+		HAL_Delay(1000);
+		printDebug("\nLAT: ");
+		printDebugFloat(GPS.dec_latitude);
+		printDebug("\nLON: ");
+		printDebugFloat(GPS.dec_longitude);
+	}
 
 
 	//  Buscar direcciones I2C
 	I2C_Scan(&hi2c2);
 	I2C_Scan(&hi2c3);
 
-	// Test unitario EEPROM
+
+	// Test unitario EEPROM OK
 	if (eeprom.Setup() == true){
 		printDebug("\nEEPROM OK");
 	}
@@ -128,7 +165,7 @@ void setup(){
 
 
 
-	// Test unitario Servo:
+	// Test unitario Servo OK
 	for(int i = 0; i < 5; i++){
 		HAL_Delay(2000);
 		apertura_paracaidas();
@@ -139,39 +176,7 @@ void setup(){
 
 
 
-
-
 	// Configurar EEPROM:
-
-
-//	// Configuración de la EEPROM I2C
-//	bool Setup();
-//
-//
-//
-//	// Funcion de configuracion de la unidad de escritura (numero de datos a guardar)
-//	void ConfigUnitSave(uint8_t n_float, uint8_t n_uint32_t, uint8_t n_int32_t, uint8_t n_uint16_t, uint8_t n_int16_t, uint8_t n_uint8_t, uint8_t n_int8_t);
-//
-//	// Funcion para definir el puntero de guardado de datos
-//	void ConfigPointerSave(uint8_t* pointer);
-//
-//	// Funcion para configurar la lectura del tiempo
-//	void ConfigPointerTime(uint32_t* flight_time);
-//
-//	// Funcion para definir la velocidad de escritura en cada etapa
-//	void ConfigSpace(float despegue, float aterrizaje, uint32_t t_vuelo, uint32_t t_caida);
-//
-//
-//	// Funcion para el guardado de datos si procede
-//	void loop(bool despegue, bool caida);
-//
-//
-//
-//	// -----------  API -----------------
-//
-//	void PrintDebug();
-//
-//	void Sd_Save();
 
 
 

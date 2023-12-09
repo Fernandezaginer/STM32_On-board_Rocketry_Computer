@@ -2,80 +2,68 @@
 
 
 #include "CustomLibs/0-Utilities.h"
+#include "CustomLibs/Serial.h"
 #include "stdio.h"
 #include "stm32f4xx.h"
 
+#ifndef __GPS_H__
+#define __GPS_H__
 
-#ifndef _GPS_H_
-#define _GPS_H_
+extern UART_HandleTypeDef huart1;
+#define	GPS_USART	&huart1
 
+#define GPSBUFSIZE  256
 
-
-#define byte unsigned char
-
-
-#define _GPS_MPH_PER_KNOT 1.15077945
-#define _GPS_MPS_PER_KNOT 0.51444444
-#define _GPS_KMPH_PER_KNOT 1.852
-#define _GPS_MILES_PER_METER 0.00062137112
-#define _GPS_KM_PER_METER 0.001
-
-
-enum A{
-GPS_INVALID_AGE = 0xFFFFFFFF,      GPS_INVALID_ANGLE = 999999999,
-GPS_INVALID_ALTITUDE = 999999999,  GPS_INVALID_DATE = 0,
-GPS_INVALID_TIME = 0xFFFFFFFF,		 GPS_INVALID_SPEED = 999999999,
-GPS_INVALID_FIX_TIME = 0xFFFFFFFF, GPS_INVALID_SATELLITES = 0xFF,
-GPS_INVALID_HDOP = 0xFFFFFFFF
-};
+#define c1 "$PUBX,40,GLL,0,0,0,0*5C"
+#define c2 "$PUBX,40,ZDA,0,0,0,0*44"
+#define c3 "$PUBX,40,VTG,0,0,0,0*5E"
+#define c4 "$PUBX,40,GSV,0,0,0,0*59"
+#define c5 "$PUBX,40,GSA,0,0,0,0*4E"
+#define c6 "$PUBX,40,RMC,0,0,0,0*47"
+#define c7 "\xB5\x62\x06\x08\x06\x00\xC8\x00\x01\x00\x01\x00\xDE\x6A"
 
 
-class GPS{
-public:
+typedef struct{
 
-  void TinyGPS();
+    float dec_longitude;
+    float dec_latitude;
+    float altitude_ft;
 
-  bool encode(int8_t c);
+    float nmea_longitude;
+    float nmea_latitude;
+    float utc_time;
+    char ns, ew;
+    int lock;
+    int satelites;
+    float hdop;
+    float msl_altitude;
+    char msl_units;
 
-  void get_position(float *latitude, float *longitude, unsigned long *fix_age);
-  void get_datetime(unsigned long *date, unsigned long *time, unsigned long *age);
-  long altitude();
-  unsigned long course();
-  unsigned long speed();
-  unsigned short satellites();
+    char rmc_status;
+    float speed_k;
+    float course_d;
+    int date;
 
-  unsigned long hdop();
+    char gll_status;
 
-  void f_get_position(float *latitude, float *longitude, unsigned long *fix_age);
-  void crack_datetime(int *year, byte *month, byte *day,
-	byte *hour, byte *minute, byte *second, byte *hundredths, unsigned long *fix_age);
-  float f_altitude();
-  float f_course();
-  float f_speed_knots();
-  float f_speed_mph();
-  float f_speed_mps();
-  float f_speed_kmph();
-
-  float distance_between (float lat1, float long1, float lat2, float long2);
-  float course_to (float lat1, float long1, float lat2, float long2);
+    float course_t;
+    char course_t_unit;
+    float course_m;
+    char course_m_unit;
+    char speed_k_unit;
+    float speed_km;
+    char speed_km_unit;
+} GPS_t;
 
 
 
-private:
-  int from_hex(char a);
-  unsigned long parse_decimal();
-  unsigned long parse_degrees();
-  bool term_complete();
-  long gpsatol(const char *str);
-  int gpsstrcmp(const char *str1, const char *str2);
-
-};
-
-
-
-
+void GPS_Init();
+void GSP_USBPrint(char *data);
+void GPS_print_val(char *data, int value);
+void GPS_UART_CallBack();
+int GPS_validate(char *nmeastr);
+void GPS_parse(char *GPSstrParse);
+float GPS_nmea_to_dec(float deg_coord, char nsew);
 
 
 #endif
-
-

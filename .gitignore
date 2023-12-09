@@ -1,6 +1,8 @@
 Drivers/*
 Middlewares/*
+Release/*
 USB_HOST/*
+FATFS/*
 .settings/
 .cproject
 .mxproject
