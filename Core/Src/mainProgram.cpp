@@ -1,5 +1,6 @@
 
 
+
 #include <CustomLibs/FileHandling.h>
 #include "mainProgram.h"
 #include "fatfs.h"
@@ -69,8 +70,28 @@ EEPROM eeprom = *(new EEPROM(&hi2c3));
 extern GPS_t GPS;
 
 
+// EEPROM  (28)
+// [4]   [4]  [4]  [1]   [4]  [4]  [4]  [2]  [1]
+// TIME  LAT  LON  SATS  ALT  PRE  Az   Gz   PARAC.
+// SD  (48)
+// [4]   [4]  [4]  [1]   [4]  [4]  [4]  [2]  [1]       [4]     [4]   [4]  [2]  [2]  [4]
+// TIME  LAT  LON  SATS  ALT  PRE  Az   Gz   PARAC.    ALT_GPS  Ax   Ay   Gx   Gy   TEMP
+
+
+
 // Lecturas:
-//uint8_t lec = (uint8_t*)malloc(20*sizeof(uint8_t));
+uint8_t* data = (uint8_t*)malloc(48*sizeof(uint8_t));
+
+
+
+
+
+
+
+
+
+
+
 
 
 // led error
@@ -78,8 +99,6 @@ extern GPS_t GPS;
 
 // Mediciones sensores:
 float Altitud_BMP = 0.0;
-
-
 
 
 
@@ -93,7 +112,14 @@ void cierre_paracaidas();
 void apertura_paracaidas();
 bool test_modulos();
 void read_save_data();
-
+void savedata(uint8_t* dir_dato, uint8_t* dir, uint8_t size);
+void saveFloat(float val, uint8_t* dir);
+void saveUint8(uint8_t val, uint8_t* dir);
+void saveInt8(int8_t val, uint8_t* dir);
+void saveUint16(uint16_t val, uint8_t* dir);
+void saveInt16(int16_t val, uint8_t* dir);
+void saveUint32(uint32_t val, uint8_t* dir);
+void saveInt32(uint32_t val, uint8_t* dir);
 
 
 
@@ -102,8 +128,7 @@ void read_save_data();
 //                       Callbacks
 //----------------------------------------------------------
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 	if(huart == &huart1) GPS_UART_CallBack();
 }
 
@@ -226,7 +251,7 @@ void loop(){
 	// CONTROL DEL PARACAIDAS
 	if (Altitud_BMP > alt_max && (FLIGHT_TIME > T_MIN_PARACAIDAS)) {
 		alt_max = Altitud_BMP;  // Obtener la altura maxima del vuelo
-    }
+    	}
 	if(COND_APERTURA_1 && COND_APERTURA_2){
 		apertura_paracaidas();
 	}
@@ -264,8 +289,6 @@ void apertura_paracaidas(){
 	fin_paracaidas = false;
 }
 
-
-
 bool test_modulos(){
 	return true;
 }
@@ -273,10 +296,67 @@ bool test_modulos(){
 
 void read_save_data(){
 
+// [4]   [4]  [4]  [1]   [4]  [4]  [4]  [2]  [1]       [4]     [4]   [4]  [2]  [2]  [4]
+// TIME  LAT  LON  SATS  ALT  PRE  Az   Gz   PARAC.    ALT_GPS  Ax   Ay   Gx   Gy   TEMP
+// saveUint32(float val, data[0])
+// saveFloat(float val, data[4])
+// saveFloat(float val, data[8])
+// saveUint8(float val, data[12])
+// saveFloat(float val, data[13])
+// saveFloat(float val, data[17])
+// saveFloat(float val, data[21])
+// saveInt16(float val, data[25])
+// saveUint8(float val, data[27])
+// saveFloat(float val, data[28])
+// saveFloat(float val, data[32])
+// saveFloat(float val, data[36])
+// saveInt16(float val, data[40])
+// saveInt16(float val, data[42])
+// saveFloat(float val, data[44])
+
+// EEPROM write
+
+
+// SD write
+
 
 }
 
 
+void savedata(uint8_t* dir_dato, uint8_t* dir, uint8_t size) {
+  uint8_t* puntero_dato = dir_dato;
+  for (uint8_t i = 0; i < size; i++) {
+    *dir = *(puntero_dato);
+    puntero_dato++;
+    dir++;
+  }
+}
 
+void saveFloat(float val, uint8_t* dir){
+  savedata(&val, dir, 4);
+}
 
+void saveUint8(uint8_t val, uint8_t* dir){
+  savedata(&val, dir, 1);
+}
+
+void saveInt8(int8_t val, uint8_t* dir){
+  savedata(&val, dir, 1);
+}
+
+void saveUint16(uint16_t val, uint8_t* dir){
+  savedata(&val, dir, 2);
+}
+
+void saveInt16(int16_t val, uint8_t* dir){
+  savedata(&val, dir, 2);
+}
+
+void saveUint32(uint32_t val, uint8_t* dir){
+  savedata(&val, dir, 4);
+}
+
+void saveInt32(uint32_t val, uint8_t* dir){
+  savedata(&val, dir, 4);
+}
 
