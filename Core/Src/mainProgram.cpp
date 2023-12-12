@@ -70,14 +70,14 @@ extern GPS_t GPS;
 
 
 // Lecturas:
-//uint8_t lec = (uint8_t*)malloc(20*sizeof(uint8_t));
+uint8_t* lec = (uint8_t*)malloc(20*sizeof(uint8_t));
 
+
+float Altitud_BMP = 0.0;
+uin32_t* p_flight_time;
 
 // led error
 // led ok
-
-// Mediciones sensores:
-float Altitud_BMP = 0.0;
 
 
 
@@ -91,7 +91,7 @@ float Altitud_BMP = 0.0;
 
 void cierre_paracaidas();
 void apertura_paracaidas();
-bool test_modulos();
+bool init_modulos();
 void read_save_data();
 
 
@@ -117,10 +117,16 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 void setup(){
 
 
-	// Inicializar sensores:
+	// Inicializar el actuador del paracaidas
 	cierre_paracaidas();
-	s_presion.init();
-	GPS_Init();
+
+
+	// Inicializar sensores:
+	if(!init_modulos()){
+		while(true){
+
+		}
+	}
 
 
 	// Test unitario SD
@@ -130,53 +136,51 @@ void setup(){
 //	Create_File("FILEB.TXT");
 //	Unmount_SD("");
 
-
 	// Test unitario GPS OK
-	for(int i = 0; i < 20; i++){
-		HAL_Delay(1000);
-		printDebug("\nLAT: ");
-		printDebugFloat(GPS.dec_latitude);
-		printDebug("\nLON: ");
-		printDebugFloat(GPS.dec_longitude);
-	}
-
+//	for(int i = 0; i < 20; i++){
+//		HAL_Delay(1000);
+//		printDebug("\nLAT: ");
+//		printDebug(GPS.dec_latitude);
+//		printDebug("\nLON: ");
+//		printDebug(GPS.dec_longitude);
+//	}
 
 	//  Buscar direcciones I2C
-	I2C_Scan(&hi2c2);
-	I2C_Scan(&hi2c3);
-
+//	I2C_Scan(&hi2c2);
+//	I2C_Scan(&hi2c3);
 
 	// Test unitario EEPROM OK
-	if (eeprom.Setup() == true){
-		printDebug("\nEEPROM OK");
-	}
-	else{
-		printDebug("\nEEPROM NOT FOUND");
-	}
-
+//	if (eeprom.Setup() == true){
+//		printDebug("\nEEPROM OK");
+//	}
+//	else{
+//		printDebug("\nEEPROM NOT FOUND");
+//	}
 
 	// Test unitario BMP OK
-	printDebug("\nTemperatura: ");
-	printDebugFloat(s_presion.getTemperature());
-	printDebug("\nPresion: ");
-	printDebugFloat(s_presion.getPressure());
-	printDebug("\nAltitud: ");
-	printDebugFloat(s_presion.getAltitude());
-
-
+//	printDebug("\nTemperatura: ");
+//	printDebugFloat(s_presion.getTemperature());
+//	printDebug("\nPresion: ");
+//	printDebugFloat(s_presion.getPressure());
+//	printDebug("\nAltitud: ");
+//	printDebugFloat(s_presion.getAltitude());
 
 	// Test unitario Servo OK
-	for(int i = 0; i < 5; i++){
-		HAL_Delay(2000);
-		apertura_paracaidas();
-		HAL_Delay(2000);
-		cierre_paracaidas();
-	}
+//	for(int i = 0; i < 5; i++){
+//		HAL_Delay(2000);
+//		apertura_paracaidas();
+//		HAL_Delay(2000);
+//		cierre_paracaidas();
+//	}
 
 
 
 
 	// Configurar EEPROM:
+	eeprom.ConfigUnitSave(1,1,0,0,0,1,0);
+	eeprom.ConfigPointerSave(lec);
+	eeprom.ConfigPointerTime(p_flight_time);
+	eeprom.ConfigSpace(0.6, 0.4, 13000, 40000);
 
 
 
@@ -184,26 +188,18 @@ void setup(){
 
 
 
-
-	// Comprobar el funcionamiento de los modulos
-	if(test_modulos()){
-
-	}
-	else{
-
-	}
 
 	// Espera a obtener cobertura GPS
+	while(GPS.dec_latitude == 0.0 || GPS.dec_longitude == 0.0){
+		HAL_Delay(1000);
+		printDebug("Esperando senal GPS ...");
+	}
 
 
 
 
 	// Listo para despegue
-
-
-
 }
-
 
 
 
@@ -237,6 +233,7 @@ void loop(){
 		read_save_data();
 	}
 
+	*p_flight_time = FLIGHT_TIME;
 }
 
 
@@ -252,7 +249,6 @@ void loop(){
 // -------------------------------------------------------
 
 
-
 void cierre_paracaidas(){
 	paracaidas.setup(&servo_pin);
 	paracaidas.attach();
@@ -264,16 +260,30 @@ void apertura_paracaidas(){
 	fin_paracaidas = false;
 }
 
-
-
-bool test_modulos(){
-	return true;
+bool init_modulos(){
+	bool test_ok = true;
+	if(!eeprom.Setup()){
+		printDebug("[ERROR] Inicializacion memoria EEPROM");
+		test_ok = false;
+	}
+	if(!s_presion.init()){
+		printDebug("[ERROR] Inicializacion sesnor PRESION");
+		test_ok = false;
+	}
+	if(test_ok){
+		printDebug("INICIALIZACION DE TODOS LOS SENSORES CORRECTA");
+	}
+	return test_ok;
 }
-
 
 void read_save_data(){
 
+	// 1
+	// 2
+	// 3
+	// 4
 
+	eeprom.loop(1,1);
 }
 
 
