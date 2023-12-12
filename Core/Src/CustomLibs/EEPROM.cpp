@@ -55,17 +55,6 @@ void EEPROM::ConfigSpace(float despegue, float aterrizaje, uint32_t t_vuelo, uin
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
 void EEPROM::writeEEPROM_Page(uint16_t address, uint8_t *val, uint8_t tam) {
 	uint8_t* pdata;
 	pdata = (uint8_t *)malloc((tam+2)*sizeof(uint8_t));
@@ -80,6 +69,20 @@ void EEPROM::writeEEPROM_Page(uint16_t address, uint8_t *val, uint8_t tam) {
 
 
 
+// Read EEPROM address
+uint8_t EEPROM::readEEPROM(uint32_t address) {
+  uint8_t rcvData = 0xFF;
+
+  uint8_t buf[2] = {};
+  buf[0] = (uint8_t)(address >> 8);       // MSB
+  buf[1] = (uint8_t)(address & 0x00FF);   // LSB
+
+  HAL_I2C_Master_Transmit(hi2c, EEPROM_I2C_ADDRESS << 1, buf, 2, 10);
+  HAL_I2C_Master_Receive(hi2c, EEPROM_I2C_ADDRESS << 1, &rcvData, 1, 10);
+  return rcvData;
+}
+
+
 
 
 
@@ -90,30 +93,30 @@ void EEPROM::writeEEPROM_Page(uint16_t address, uint8_t *val, uint8_t tam) {
 void EEPROM::loop(bool despegue, bool caida){
 	if (despegue){
 
-		// Realizar lectura si ha pasado el tiempo correspondiente
-		// (La eeprom tiene 64 Kb, sirve para poner un límite)
-		if(intervalo_despegue*n_ud_esctiras < * flight_time){
+		// Realizar escritura si ha pasado el tiempo correspondiente
+		// (La eeprom tiene 32 Kb, sirve para poner un límite)
+		if(intervalo_despegue*n_ud_escritas < * flight_time){
 			// Escribir los valores
 
-//			if(n_ud_escritas+1<n_ud_maximas){
-//				writeEEPROM_Page((uint8_t)(n_ud_escritas*n_bytes), this->pointer, n_bytes);
-//				n_ud_esctiras++;
-//			}
+			if(n_ud_escritas+1<n_ud_maximas){
+				writeEEPROM_Page((uint8_t)(n_ud_escritas*n_bytes), this->pointer, n_bytes);
+				n_ud_escritas++;
+			}
 		}
 
 
 	}
 	else if(caida){
 
-		// Realizar lectura si ha pasado el tiempo correspondiente
-		// (La eeprom tiene 64 Kb, sirve para poner un límite)
-		if(intervalo_despegue*n_ud_esctiras < * flight_time){
+		// Realizar escritura si ha pasado el tiempo correspondiente
+		// (La eeprom tiene 32 Kb, sirve para poner un límite)
+		if(intervalo_despegue*n_ud_escritas < * flight_time){
 			// Escribir los valores
 
-//			if(n_ud_escritas+1<n_ud_maximas){
-//				writeEEPROM_Page((uint8_t)(n_ud_escritas*n_bytes), this->pointer, n_bytes);
-//				n_ud_esctiras++;
-//			}
+			if(n_ud_escritas+1<n_ud_maximas){
+				writeEEPROM_Page((uint8_t)(n_ud_escritas*n_bytes), this->pointer, n_bytes);
+				n_ud_escritas++;
+			}
 		}
 
 	}
@@ -134,6 +137,34 @@ void EEPROM::loop(bool despegue, bool caida){
 // -----------  API -----------------
 
 void EEPROM::PrintDebug(){
+
+	printDebug("Lectura de la memoria EEPROM por SWD:\n");
+	printDebug("\n");
+	printDebug("\n");
+	printDebug("Contenido de la memoria:\n");
+	printDebug("\nNº Floats:");
+	printDebugInt((int)n_float);
+	printDebug("\nNº Uint32:");
+	printDebugInt((int)n_uint32_t);
+	printDebug("\nNº Int32:");
+	printDebugInt((int)n_int32_t);
+	printDebug("\nNº Uint16:");
+	printDebugInt((int)n_uint16_t);
+	printDebug("\nNº Int16:");
+	printDebugInt((int)n_int16_t);
+	printDebug("\nNº Uint8:");
+	printDebugInt((int)n_uint8_t);
+	printDebug("\nNº Int8:");
+	printDebugInt((int)n_int8_t);
+	printDebug("\n\n\n");
+
+
+	for(int i = 0; i < n_ud_maximas; i++){
+		printDebug(" - - - ");
+		for(int i = 0; i < 1; i++){
+			//this->readEEPROM();
+		}
+	}
 
 }
 

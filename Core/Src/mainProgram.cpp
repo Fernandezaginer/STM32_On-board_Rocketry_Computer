@@ -1,5 +1,6 @@
 
 
+
 #include <CustomLibs/FileHandling.h>
 #include "mainProgram.h"
 #include "fatfs.h"
@@ -33,6 +34,8 @@ extern UART_HandleTypeDef huart2;
 #define DIF_ALTURA_APERTURA   20.0         // m
 #define DIF_ALTURA_ALARMA     200.0        // m
 #define T_MAX_ALARMA          30000        // ms
+#define TIEMPO_APOGEO_ESTIMADO  13000
+#define TIEMPO_VUELO_ESTIMADO   40000
 // Apogeo estimado: 1500 m  (13 s)
 
 
@@ -51,10 +54,13 @@ bool inicio_grabacion = false;
 bool fin_paracaidas = false;
 bool fin_alarma = false;
 
+bool despegue = false;
+bool caida = false;
 
 #define COND_DESPEGUE_1 true
 #define COND_DESPEGUE_2 true
 #define COND_DESPEGUE_3 true
+
 
 
 
@@ -69,16 +75,21 @@ EEPROM eeprom = *(new EEPROM(&hi2c3));
 extern GPS_t GPS;
 
 
+//              EEPROM + SD                                          SOLO SD
+// [4]  [4]  [4]  [4]  [4]  [4]   [1]    [1]       [4]      [4]  [4]  [2]  [2]  [2]  [4]   [4]
+// LAT  LON  ALT  PRE  Az   TIME  PARAC  SATS      ALT_GPS  Ax   Ay   Gx   Gy   Gz   TEMP  HUM
+// F    F    F    F    F    U32   U8     U8
+
+// EEPROM: 26
+// SD:     52
+
+
 // Lecturas:
-uint8_t* lec = (uint8_t*)malloc(20*sizeof(uint8_t));
+uint8_t* data = (uint8_t*)malloc(52*sizeof(uint8_t));
 
 
 float Altitud_BMP = 0.0;
-uin32_t* p_flight_time;
-
-// led error
-// led ok
-
+uint32_t* p_flight_time;
 
 
 
@@ -93,7 +104,14 @@ void cierre_paracaidas();
 void apertura_paracaidas();
 bool init_modulos();
 void read_save_data();
-
+void savedata(uint8_t* dir_dato, uint8_t* dir, uint8_t size);
+void saveFloat(float val, uint8_t* dir);
+void saveUint8(uint8_t val, uint8_t* dir);
+void saveInt8(int8_t val, uint8_t* dir);
+void saveUint16(uint16_t val, uint8_t* dir);
+void saveInt16(int16_t val, uint8_t* dir);
+void saveUint32(uint32_t val, uint8_t* dir);
+void saveInt32(uint32_t val, uint8_t* dir);
 
 
 
@@ -102,8 +120,7 @@ void read_save_data();
 //                       Callbacks
 //----------------------------------------------------------
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 	if(huart == &huart1) GPS_UART_CallBack();
 }
 
@@ -124,7 +141,7 @@ void setup(){
 	// Inicializar sensores:
 	if(!init_modulos()){
 		while(true){
-
+			// Parpadear led error
 		}
 	}
 
@@ -177,15 +194,10 @@ void setup(){
 
 
 	// Configurar EEPROM:
-	eeprom.ConfigUnitSave(1,1,0,0,0,1,0);
-	eeprom.ConfigPointerSave(lec);
-	eeprom.ConfigPointerTime(p_flight_time);
-	eeprom.ConfigSpace(0.6, 0.4, 13000, 40000);
-
-
-
-
-
+	eeprom.ConfigUnitSave(5,1,0,0,0,2,0);
+	eeprom.ConfigPointerSave(data);
+	eeprom.ConfigPointerTime(&(p_flight_time[20]));   // verificar funcionamiento
+	eeprom.ConfigSpace(0.6, 0.4, TIEMPO_APOGEO_ESTIMADO, TIEMPO_VUELO_ESTIMADO);
 
 
 
@@ -195,10 +207,9 @@ void setup(){
 		printDebug("Esperando senal GPS ...");
 	}
 
-
-
-
 	// Listo para despegue
+
+
 }
 
 
@@ -210,30 +221,32 @@ void setup(){
 //                   LOOP
 //-------------------------------------------------
 
+
+
 void loop(){
 
 
 	// DESPEGUE DEL COHETE E INICIO DE LA GRABACIÓN
 	if(COND_DESPEGUE_1 && COND_DESPEGUE_2 && COND_DESPEGUE_3 && !inicio_grabacion){
 		t_inicio = HAL_GetTick();
-		inicio_grabacion = true;
+		despegue = true;
 	}
 
 	// CONTROL DEL PARACAIDAS
-	if (Altitud_BMP > alt_max && (FLIGHT_TIME > T_MIN_PARACAIDAS)) {
+	if (Altitud_BMP > alt_max && despegue && (FLIGHT_TIME > T_MIN_PARACAIDAS)) {
 		alt_max = Altitud_BMP;  // Obtener la altura maxima del vuelo
-    }
+	}
 	if(COND_APERTURA_1 && COND_APERTURA_2){
 		apertura_paracaidas();
+		despegue = false;
+		caida = true;
 	}
 
-
-	// GRABACIÓN DE DATOS
-	if(inicio_grabacion == true){
-		read_save_data();
-	}
 
 	*p_flight_time = FLIGHT_TIME;
+	read_save_data();
+
+
 }
 
 
@@ -276,17 +289,79 @@ bool init_modulos(){
 	return test_ok;
 }
 
+
 void read_save_data(){
 
-	// 1
-	// 2
-	// 3
-	// 4
 
-	eeprom.loop(1,1);
+//              EEPROM + SD                                          SOLO SD
+// [4]  [4]  [4]  [4]  [4]  [4]   [1]    [1]       [4]      [4]  [4]  [2]  [2]  [2]  [4]   [4]
+// LAT  LON  ALT  PRE  Az   TIME  PARAC  SATS      ALT_GPS  Ax   Ay   Gx   Gy   Gz   TEMP  HUM
+// F    F    F    F    F    U32   U8     U8
+
+
+
+// saveUint32(float val, data[0])
+// saveFloat(float val, data[4])
+// saveFloat(float val, data[8])
+// saveUint8(float val, data[12])
+// saveFloat(float val, data[16])
+// saveFloat(float val, data[20])
+// saveFloat(float val, data[24])
+// saveInt16(float val, data[25])
+// saveUint8(float val, data[26])
+// saveFloat(float val, data[30])
+// saveFloat(float val, data[34])
+// saveFloat(float val, data[38])
+// saveInt16(float val, data[40])
+// saveInt16(float val, data[42])
+// saveFloat(float val, data[44])
+// saveFloat(float val, data[48])
+
+
+	// EEPROM write
+	eeprom.loop(despegue, caida);
+
+	// SD write
+	//...
 }
 
 
 
 
+void savedata(uint8_t* dir_dato, uint8_t* dir, uint8_t size) {
+  uint8_t* puntero_dato = dir_dato;
+  for (uint8_t i = 0; i < size; i++) {
+    *dir = *(puntero_dato);
+    puntero_dato++;
+    dir++;
+  }
+}
+
+void saveFloat(float val, uint8_t* dir){
+  savedata((uint8_t*)&val, dir, 4);
+}
+
+void saveUint8(uint8_t val, uint8_t* dir){
+  savedata(&val, dir, 1);
+}
+
+void saveInt8(int8_t val, uint8_t* dir){
+  savedata((uint8_t*)&val, dir, 1);
+}
+
+void saveUint16(uint16_t val, uint8_t* dir){
+  savedata((uint8_t*)&val, dir, 2);
+}
+
+void saveInt16(int16_t val, uint8_t* dir){
+  savedata((uint8_t*)&val, dir, 2);
+}
+
+void saveUint32(uint32_t val, uint8_t* dir){
+  savedata((uint8_t*)&val, dir, 4);
+}
+
+void saveInt32(uint32_t val, uint8_t* dir){
+  savedata((uint8_t*)&val, dir, 4);
+}
 
