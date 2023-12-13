@@ -183,7 +183,7 @@ void EEPROM::PrintDebug(){
 				float val;
 				this->_4byte_to_float(&(data[dir_data]), &val);
 				printDebugFloat(val);
-				printDebug("   ");
+				printDebug("\t");
 				dir_data=+4;
 			}
 		}
@@ -196,7 +196,7 @@ void EEPROM::PrintDebug(){
 				void _4byte_to_U32(uint8_t* aux, uint32_t *out);
 				this->_4byte_to_float(&(data[dir_data]), &val);
 				printDebugFloat(val);
-				printDebug("   ");
+				printDebug("\t");
 				dir_data=+4;
 			}
 		}
@@ -205,10 +205,10 @@ void EEPROM::PrintDebug(){
 		// Print I32
 		if (n_int32_t > 0){
 			for(int i = 0; i < n_int32_t; i++){
-				float val;
-				this->_4byte_to_float(&(data[dir_data]), &val);
+				int32_t val;
+				this->_4byte_to_I32(&(data[dir_data]), &val);
 				printDebugFloat(val);
-				printDebug("   ");
+				printDebug("\t");
 				dir_data=+4;
 			}
 		}
@@ -217,10 +217,10 @@ void EEPROM::PrintDebug(){
 		// Print U16
 		if (n_uint16_t > 0){
 			for(int i = 0; i < n_uint16_t; i++){
-				float val;
-				this->_4byte_to_float(&(data[dir_data]), &val);
+				uint16_t val;
+				this->_2byte_to_U16(&(data[dir_data]), &val);
 				printDebugFloat(val);
-				printDebug("   ");
+				printDebug("\t");
 				dir_data=+4;
 			}
 		}
@@ -229,10 +229,10 @@ void EEPROM::PrintDebug(){
 		// Print I16
 		if (n_int16_t > 0){
 			for(int i = 0; i < n_int16_t; i++){
-				float val;
-				this->_4byte_to_float(&(data[dir_data]), &val);
+				int16_t val;
+				this->_2byte_to_I16(&(data[dir_data]), &val);
 				printDebugFloat(val);
-				printDebug("   ");
+				printDebug("\t");
 				dir_data=+4;
 			}
 		}
@@ -241,10 +241,10 @@ void EEPROM::PrintDebug(){
 		// Print U8
 		if (n_uint8_t > 0){
 			for(int i = 0; i < n_uint8_t; i++){
-				float val;
-				this->_4byte_to_float(&(data[dir_data]), &val);
+				uint8_t val;
+				this->_byte_to_U8(&(data[dir_data]), &val);
 				printDebugFloat(val);
-				printDebug("   ");
+				printDebug("\t");
 				dir_data=+4;
 			}
 		}
@@ -253,25 +253,19 @@ void EEPROM::PrintDebug(){
 		// Print I8
 		if (n_int8_t > 0){
 			for(int i = 0; i < n_int8_t; i++){
-				float val;
-				this->_4byte_to_float(&(data[dir_data]), &val);
+				int8_t val;
+				this->_byte_to_I8(&(data[dir_data]), &val);
 				printDebugFloat(val);
-				printDebug("   ");
+				printDebug("\t");
 				dir_data=+4;
 			}
 		}
 
+		free(data);
+
 
 		// Print \n
-
-
-		void _4byte_to_I32(uint8_t* aux, int32_t *out);
-
-		void _2byte_to_U16(uint8_t* aux, uint16_t *out);
-		void _2byte_to_I16(uint8_t* aux, int16_t *out);
-
-		void _byte_to_U8(uint8_t* aux, uint8_t *out);
-		void _byte_to_I8(uint8_t* aux, int8_t *out);
+		printDebug("\n");
 
 
 	}

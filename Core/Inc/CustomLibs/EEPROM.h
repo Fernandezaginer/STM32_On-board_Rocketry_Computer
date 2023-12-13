@@ -87,32 +87,11 @@ private:
 
 	void _byte_to_U8(uint8_t* aux, uint8_t *out);
 	void _byte_to_I8(uint8_t* aux, int8_t *out);
-
-
 };
 
 
 
-
-
-
-
-
-
-
-
 #endif
-
-
-
-
-
-
-
-
-
-
-
 
 
 
