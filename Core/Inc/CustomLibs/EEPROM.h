@@ -75,9 +75,19 @@ private:
 
 	void writeEEPROM_Page(uint16_t address, uint8_t *val, uint8_t tam);
 	uint8_t readEEPROM(uint32_t address);
+	void readEEPROMpage(uint8_t* buffer,  uint32_t address_start, uint8_t size);
 	void float_to_4byte(float* var, uint8_t* aux);
 	void _4byte_to_float(uint8_t* aux, float *out);
-	void uint16_to_2byte(uint16_t dato_in, uint8_t* dir_dato_out);
+
+	void _4byte_to_U32(uint8_t* aux, uint32_t *out);
+	void _4byte_to_I32(uint8_t* aux, int32_t *out);
+
+	void _2byte_to_U16(uint8_t* aux, uint16_t *out);
+	void _2byte_to_I16(uint8_t* aux, int16_t *out);
+
+	void _byte_to_U8(uint8_t* aux, uint8_t *out);
+	void _byte_to_I8(uint8_t* aux, int8_t *out);
+
 
 };
 

@@ -83,6 +83,14 @@ uint8_t EEPROM::readEEPROM(uint32_t address) {
 }
 
 
+void EEPROM::readEEPROMpage(uint8_t* buffer, uint32_t address_start, uint8_t size){
+	for(int i = 0; i < size; i++){
+		buffer[i] = readEEPROM(address_start + 1);
+	}
+}
+
+
+
 
 
 
@@ -161,9 +169,111 @@ void EEPROM::PrintDebug(){
 
 	for(int i = 0; i < n_ud_maximas; i++){
 		printDebug(" - - - ");
+		uint8_t* data;
+		uint8_t dir_data = 0;
+		data = (uint8_t*)malloc((n_bytes) * sizeof(uint8_t));
 		for(int i = 0; i < 1; i++){
-			//this->readEEPROM();
+			this->readEEPROMpage(data, n_ud_maximas*n_bytes, n_bytes);
 		}
+
+
+		// Print floats
+		if (n_float > 0){
+			for(int i = 0; i < n_float; i++){
+				float val;
+				this->_4byte_to_float(&(data[dir_data]), &val);
+				printDebugFloat(val);
+				printDebug("   ");
+				dir_data=+4;
+			}
+		}
+
+
+		// Print U32
+		if (n_uint32_t > 0){
+			for(int i = 0; i < n_uint32_t; i++){
+				float val;
+				void _4byte_to_U32(uint8_t* aux, uint32_t *out);
+				this->_4byte_to_float(&(data[dir_data]), &val);
+				printDebugFloat(val);
+				printDebug("   ");
+				dir_data=+4;
+			}
+		}
+
+
+		// Print I32
+		if (n_int32_t > 0){
+			for(int i = 0; i < n_int32_t; i++){
+				float val;
+				this->_4byte_to_float(&(data[dir_data]), &val);
+				printDebugFloat(val);
+				printDebug("   ");
+				dir_data=+4;
+			}
+		}
+
+
+		// Print U16
+		if (n_uint16_t > 0){
+			for(int i = 0; i < n_uint16_t; i++){
+				float val;
+				this->_4byte_to_float(&(data[dir_data]), &val);
+				printDebugFloat(val);
+				printDebug("   ");
+				dir_data=+4;
+			}
+		}
+
+
+		// Print I16
+		if (n_int16_t > 0){
+			for(int i = 0; i < n_int16_t; i++){
+				float val;
+				this->_4byte_to_float(&(data[dir_data]), &val);
+				printDebugFloat(val);
+				printDebug("   ");
+				dir_data=+4;
+			}
+		}
+
+
+		// Print U8
+		if (n_uint8_t > 0){
+			for(int i = 0; i < n_uint8_t; i++){
+				float val;
+				this->_4byte_to_float(&(data[dir_data]), &val);
+				printDebugFloat(val);
+				printDebug("   ");
+				dir_data=+4;
+			}
+		}
+
+
+		// Print I8
+		if (n_int8_t > 0){
+			for(int i = 0; i < n_int8_t; i++){
+				float val;
+				this->_4byte_to_float(&(data[dir_data]), &val);
+				printDebugFloat(val);
+				printDebug("   ");
+				dir_data=+4;
+			}
+		}
+
+
+		// Print \n
+
+
+		void _4byte_to_I32(uint8_t* aux, int32_t *out);
+
+		void _2byte_to_U16(uint8_t* aux, uint16_t *out);
+		void _2byte_to_I16(uint8_t* aux, int16_t *out);
+
+		void _byte_to_U8(uint8_t* aux, uint8_t *out);
+		void _byte_to_I8(uint8_t* aux, int8_t *out);
+
+
 	}
 
 }
@@ -182,15 +292,6 @@ void EEPROM::Sd_Save(){
 // ---------- CONVERT FNC -----------
 
 
-void EEPROM::float_to_4byte(float* var, uint8_t* aux) {
-  uint8_t* p = (uint8_t*)var;
-  for (char i = 3; i >= 0; i--) {
-    *(aux + i) = *p;
-    p++;
-  }
-}
-
-
 // Conversión de los bytes a float
 void EEPROM::_4byte_to_float(uint8_t* aux, float *out) {
   uint32_t mem_aux = 0;
@@ -202,10 +303,65 @@ void EEPROM::_4byte_to_float(uint8_t* aux, float *out) {
 }
 
 
-// Guardar el uint16_t MSB, LSB
-void EEPROM::uint16_to_2byte(uint16_t dato_in, uint8_t* dir_dato_out) {
-  *(dir_dato_out) = (uint8_t)(dato_in >> 8);
-  *(dir_dato_out + 1) = (uint8_t)dato_in;
+void EEPROM::_4byte_to_U32(uint8_t* aux, uint32_t *out){
+  uint32_t mem_aux = 0;
+  mem_aux |= aux[3];
+  mem_aux |= (uint32_t)(aux[2]) << 8;
+  mem_aux |= (uint32_t)(aux[1]) << 16;
+  mem_aux |= (uint32_t)(aux[0]) << 24;
+  *(out) = mem_aux;
 }
+
+
+void EEPROM::_4byte_to_I32(uint8_t* aux, int32_t *out){
+	int32_t mem_aux = 0;
+	mem_aux |= aux[3];
+	mem_aux |= (int32_t)(aux[2]) << 8;
+	mem_aux |= (int32_t)(aux[1]) << 16;
+	mem_aux |= (int32_t)(aux[0]) << 24;
+	*(out) = mem_aux;
+}
+
+
+void EEPROM::_2byte_to_U16(uint8_t* aux, uint16_t *out){
+	uint16_t mem_aux = 0;
+	mem_aux |= aux[1];
+	mem_aux |= (uint16_t)(aux[0]) << 8;
+	*(out) = mem_aux;
+}
+
+
+void EEPROM::_2byte_to_I16(uint8_t* aux, int16_t *out){
+	int16_t mem_aux = 0;
+	mem_aux |= aux[1];
+	mem_aux |= (int16_t)(aux[0]) << 8;
+	*(out) = mem_aux;
+}
+
+
+void EEPROM::_byte_to_U8(uint8_t* aux, uint8_t *out){
+	*(out) = *(aux);
+}
+
+
+void EEPROM::_byte_to_I8(uint8_t* aux, int8_t *out){
+	*(out) = *(aux);
+}
+
+
+
+
+
+
+
+void EEPROM::float_to_4byte(float* var, uint8_t* aux) {
+  uint8_t* p = (uint8_t*)var;
+  for (char i = 3; i >= 0; i--) {
+    *(aux + i) = *p;
+    p++;
+  }
+}
+
+
 
 
