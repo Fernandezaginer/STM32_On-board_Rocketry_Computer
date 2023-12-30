@@ -1,7 +1,13 @@
-#include "acc.h"
+#include "CustomLibs/acc.h"
 #include "stm32f4xx_hal.h"
 
-void MPU6050_Init(I2C_HandleTypeDef* hi2c)
+MPU6050::MPU6050(I2C_HandleTypeDef* hi2c)
+{
+	this->hi2c = hi2c;
+}
+
+
+bool MPU6050::MPU6050_Init()
 {
     uint8_t check, data;
     //Comprueba funcionamiento
@@ -22,10 +28,12 @@ void MPU6050_Init(I2C_HandleTypeDef* hi2c)
         data = 0;
         HAL_I2C_Mem_Write(hi2c,MPU6050_ADDR,PWR_MGMT_1_REG,1,&data,1,50);
         HAL_Delay(50);
+        return true;
     }
+    return false;
 }
 
-void MPU6050_Read_Accel(I2C_HandleTypeDef* hi2c, float* accel)
+void MPU6050::MPU6050_Read_Accel(float* accel)
 {
     uint8_t recData[6];
     int16_t Accel_X_RAW,Accel_Y_RAW,Accel_Z_RAW;

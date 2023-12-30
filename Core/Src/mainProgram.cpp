@@ -11,6 +11,7 @@
 #include "CustomLibs/Serial.h"
 #include "CustomLibs/GPS.h"
 #include "CustomLibs/SD.h"
+#include "CustomLibs/acc.h"
 
 
 
@@ -72,6 +73,7 @@ Servo paracaidas;
 SERVO_PIN servo_pin = {&htim1, TIM_CHANNEL_1};
 Bmp280 s_presion = *(new Bmp280(&hi2c2));
 EEPROM eeprom = *(new EEPROM(&hi2c3));
+MPU6050 accelerometro = *(new MPU6050(&hi2c2));
 extern GPS_t GPS;
 
 
@@ -190,6 +192,20 @@ void setup(){
 //		cierre_paracaidas();
 //	}
 
+	// Test unitario MPU6050
+	for(int i = 0; i < 5; i++){
+		float ac[3] = {};
+		accelerometro.MPU6050_Read_Accel(ac);
+		printDebug("\nAx ");
+		printDebugFloat(ac[0]);
+		printDebug("\nAy ");
+		printDebugFloat(ac[1]);
+		printDebug("\nAz ");
+		printDebugFloat(ac[2]);
+		printDebug("\n\n\n");
+		HAL_Delay(1000);
+	}
+
 
 
 
@@ -281,6 +297,10 @@ bool init_modulos(){
 	}
 	if(!s_presion.init()){
 		printDebug("[ERROR] Inicializacion sesnor PRESION");
+		test_ok = false;
+	}
+	if(!accelerometro.MPU6050_Init()){
+		printDebug("[ERROR] Inicializacion acelerometro MPU6050");
 		test_ok = false;
 	}
 	if(test_ok){
