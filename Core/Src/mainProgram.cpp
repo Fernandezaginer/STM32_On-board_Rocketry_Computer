@@ -149,11 +149,11 @@ void setup(){
 
 
 	// Test unitario SD
-//	Mount_SD("");
-//	Format_SD();
-//	Create_File("FILEA.TXT");
-//	Create_File("FILEB.TXT");
-//	Unmount_SD("");
+	Mount_SD("");
+	Format_SD();
+	Create_File("FILEA.TXT");
+	Create_File("FILEB.TXT");
+	Unmount_SD("");
 
 	// Test unitario GPS OK
 //	for(int i = 0; i < 20; i++){
@@ -193,18 +193,18 @@ void setup(){
 //	}
 
 	// Test unitario MPU6050
-	for(int i = 0; i < 5; i++){
-		float ac[3] = {};
-		accelerometro.MPU6050_Read_Accel(ac);
-		printDebug("\nAx ");
-		printDebugFloat(ac[0]);
-		printDebug("\nAy ");
-		printDebugFloat(ac[1]);
-		printDebug("\nAz ");
-		printDebugFloat(ac[2]);
-		printDebug("\n\n\n");
-		HAL_Delay(1000);
-	}
+//	for(int i = 0; i < 5; i++){
+//		float ac[3] = {};
+//		accelerometro.MPU6050_Read_Accel(ac);
+//		printDebug("\nAx ");
+//		printDebugFloat(ac[0]);
+//		printDebug("\nAy ");
+//		printDebugFloat(ac[1]);
+//		printDebug("\nAz ");
+//		printDebugFloat(ac[2]);
+//		printDebug("\n\n\n");
+//		HAL_Delay(1000);
+//	}
 
 
 
