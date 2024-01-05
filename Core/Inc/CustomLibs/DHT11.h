@@ -1,0 +1,23 @@
+#include "stm32f4xx.h"
+#include "stm32f4xx_hal.h"
+
+#define DHT11_PORT GPIOE
+#define DHT11_PIN GPIO_PIN_1
+
+
+
+void set_pin_output(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);
+
+void set_pin_input(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);
+
+void delayUs(int32_t us, TIM_HandleTypeDef* htim);
+
+void DHT11_Init(TIM_HandleTypeDef* htim);
+
+void DHT11_start();
+
+uint8_t DHT11_check();
+
+uint8_t DHT11_Read_Byte();
+
+uint8_t DHT11_Read_Sensor();
