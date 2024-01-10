@@ -1,6 +1,11 @@
 #include "stm32f4xx.h"
 #include "stm32f4xx_hal.h"
 
+
+#ifndef __DHT11_H__
+#define __DHT11_H__
+
+
 #define DHT11_PORT GPIOE
 #define DHT11_PIN GPIO_PIN_1
 
@@ -21,3 +26,7 @@ uint8_t DHT11_check();
 uint8_t DHT11_Read_Byte();
 
 uint8_t DHT11_Read_Sensor();
+
+
+#endif
+

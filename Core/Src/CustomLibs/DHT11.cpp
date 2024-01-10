@@ -1,6 +1,6 @@
 #include "stm32f4xx.h"
 #include "stm32f4xx_hal.h"
-#include "DHT11.h"
+#include "CustomLibs/DHT11.h"
 
 
 
@@ -34,9 +34,9 @@ void DHT11_Init(TIM_HandleTypeDef* htim){
 void DHT11_start(TIM_HandleTypeDef* htim){
 	/*PROTOCOLO INICIO DE SENSOR*/
 	set_pin_output(DHT11_PORT, DHT11_PIN);
-	HAL_GPIO_WritePin(DHT11_PORT, DHT11_PIN, 0);
+	HAL_GPIO_WritePin(DHT11_PORT, DHT11_PIN, GPIO_PIN_RESET);
 	delayUs(18000, htim);
-	HAL_GPIO_WritePin(DHT11_PORT, DHT11_PIN, 1);
+	HAL_GPIO_WritePin(DHT11_PORT, DHT11_PIN, GPIO_PIN_SET);
 	delayUs(20, htim);
 	set_pin_input(DHT11_PORT, DHT11_PIN);
 }

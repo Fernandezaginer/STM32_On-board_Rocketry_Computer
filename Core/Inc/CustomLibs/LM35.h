@@ -2,4 +2,9 @@
 #include "stm32f4xx_hal.h"
 
 
-float LM_Temp_Read(ADC_HandleTypeDef* hadc);
+#ifndef __LM53_H__
+#define __LM53_H__
+
+float LM_Temp_Read(ADC_HandleTypeDef*);
+
+#endif

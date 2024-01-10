@@ -10,9 +10,8 @@
 #include "CustomLibs/PRESION.h"
 #include "CustomLibs/Serial.h"
 #include "CustomLibs/GPS.h"
+#include "CustomLibs/LM35.h"
 #include "CustomLibs/SD.h"
-#include "stdio.h"
-#include <cstring>
 
 
 
@@ -159,6 +158,11 @@ void setup(){
 	}
 
 
+	// Test unitario LM35:
+	printDebug("Temperatura: ");
+	printDebugFloat(LM_Temp_Read(&hadc1));
+
+
 
 	// Test unitario SD
 //	Mount_SD("");
@@ -222,6 +226,7 @@ void setup(){
 	}
 
 	// Listo para despegue
+
 
 
 }
@@ -290,15 +295,15 @@ void apertura_paracaidas(){
 bool init_modulos(){
 	bool test_ok = true;
 	if(!eeprom.Setup()){
-		printDebug("[ERROR] Inicializacion memoria EEPROM");
+		printDebug("[ERROR] Inicializacion memoria EEPROM\n\n");
 		test_ok = false;
 	}
 	if(!s_presion.init()){
-		printDebug("[ERROR] Inicializacion sesnor PRESION");
+		printDebug("[ERROR] Inicializacion sesnor PRESION\n\n");
 		test_ok = false;
 	}
 	if(test_ok){
-		printDebug("INICIALIZACION DE TODOS LOS SENSORES CORRECTA");
+		printDebug("INICIALIZACION DE TODOS LOS SENSORES CORRECTA\n\n");
 	}
 	return test_ok;
 }
