@@ -1,4 +1,4 @@
-#include "acc.h"
+#include "CustomLibs/acc.h"
 #include "stm32f4xx_hal.h"
 
 void MPU6050_Init(I2C_HandleTypeDef* hi2c)

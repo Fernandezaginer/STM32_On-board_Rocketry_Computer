@@ -1,6 +1,6 @@
 #include "stm32f4xx.h"
 #include "stm32f4xx_hal.h"
-#include "BUZZ.h"
+#include "CustomLibs/BUZZ.h"
 
 void BUZZ_Init(TIM_HandleTypeDef* htim){
   	HAL_TIM_PWM_Start(htim, TIM_CHANNEL_2);

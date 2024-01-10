@@ -11,6 +11,8 @@
 #include "CustomLibs/Serial.h"
 #include "CustomLibs/GPS.h"
 #include "CustomLibs/SD.h"
+#include "stdio.h"
+#include <cstring>
 
 
 
@@ -144,6 +146,18 @@ void setup(){
 			// Parpadear led error
 		}
 	}
+
+
+	// Test UART 1
+
+	for(int i = 0; i < 30; i++){
+		char str[50] = {};
+		float val = 23.1;
+		sprintf(str, "Lectura de valor: \r\n");
+		HAL_UART_Transmit(&huart1, (uint8_t*)str, strlen(str), 10);
+		HAL_Delay(1000);
+	}
+
 
 
 	// Test unitario SD

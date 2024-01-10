@@ -1,6 +1,6 @@
-#include "acc.h"
+#include "CustomLibs/acc.h"
 #include "stm32f4xx_hal.h"
-#include "LED.h"
+#include "CustomLibs/LED.h"
 
 void LED_Init(TIM_HandleTypeDef* htim){
 	HAL_TIM_PWM_Start(htim, TIM_CHANNEL_1);
