@@ -10,22 +10,31 @@
 #define DHT11_PIN GPIO_PIN_1
 
 
+class DHT11{
+public:
 
-void set_pin_output(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);
+	DHT11(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, TIM_HandleTypeDef* htim);
 
-void set_pin_input(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);
+	void DHT11_Init();
+	void DHT11_start();
 
-void delayUs(int32_t us, TIM_HandleTypeDef* htim);
+	uint8_t DHT11_check();
+	uint8_t DHT11_Read_Byte();
+	uint8_t DHT11_Read_Sensor();
+	int16_t readTemperature();
 
-void DHT11_Init(TIM_HandleTypeDef* htim);
 
-void DHT11_start();
+private:
+	GPIO_TypeDef* GPIOx;
+	uint16_t GPIO_Pin;
+	TIM_HandleTypeDef* htim;
 
-uint8_t DHT11_check();
+	void delayUs(int32_t us);
+	void set_pin_output(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);
+	void set_pin_input(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin);
+};
 
-uint8_t DHT11_Read_Byte();
 
-uint8_t DHT11_Read_Sensor();
 
 
 #endif

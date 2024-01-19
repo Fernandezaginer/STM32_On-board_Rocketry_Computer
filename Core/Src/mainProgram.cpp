@@ -1,9 +1,7 @@
 
 
 
-#include <CustomLibs/FileHandling.h>
 #include "mainProgram.h"
-#include "fatfs.h"
 #include "CustomLibs/0-Utilities.h"
 #include "CustomLibs/Servo.h"
 #include "CustomLibs/EEPROM.h"
@@ -11,17 +9,22 @@
 #include "CustomLibs/Serial.h"
 #include "CustomLibs/GPS.h"
 #include "CustomLibs/LM35.h"
+#include "CustomLibs/DHT11.h"
 #include "CustomLibs/SD.h"
-
+#include "stdio.h"
+#include "math.h"
+#include "string.h"
 
 
 extern ADC_HandleTypeDef hadc1;
 extern I2C_HandleTypeDef hi2c2;
 extern I2C_HandleTypeDef hi2c3;
-extern SD_HandleTypeDef hsd;
 extern TIM_HandleTypeDef htim1;
+extern TIM_HandleTypeDef htim3;
+extern TIM_HandleTypeDef htim4;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
+//extern SD_HandleTypeDef hsd;
 
 
 
@@ -58,9 +61,7 @@ bool fin_alarma = false;
 bool despegue = false;
 bool caida = false;
 
-#define COND_DESPEGUE_1 true
-#define COND_DESPEGUE_2 true
-#define COND_DESPEGUE_3 true
+#define COND_DESPEGUE (abs(1.0) < ACC_START)
 
 
 
@@ -73,6 +74,7 @@ Servo paracaidas;
 SERVO_PIN servo_pin = {&htim1, TIM_CHANNEL_1};
 Bmp280 s_presion = *(new Bmp280(&hi2c2));
 EEPROM eeprom = *(new EEPROM(&hi2c3));
+DHT11 dht11 = *(new DHT11(GPIOE, GPIO_PIN_1, &htim4));
 extern GPS_t GPS;
 
 
@@ -97,6 +99,10 @@ uint32_t* p_flight_time;
 
 
 
+
+
+
+
 //----------------------------------------------------------
 //                       Funciones
 //----------------------------------------------------------
@@ -105,6 +111,7 @@ void cierre_paracaidas();
 void apertura_paracaidas();
 bool init_modulos();
 void read_save_data();
+void test_unitarios();
 void savedata(uint8_t* dir_dato, uint8_t* dir, uint8_t size);
 void saveFloat(float val, uint8_t* dir);
 void saveUint8(uint8_t val, uint8_t* dir);
@@ -113,6 +120,10 @@ void saveUint16(uint16_t val, uint8_t* dir);
 void saveInt16(int16_t val, uint8_t* dir);
 void saveUint32(uint32_t val, uint8_t* dir);
 void saveInt32(uint32_t val, uint8_t* dir);
+
+
+
+
 
 
 
@@ -128,6 +139,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 
 
 
+
+
+
 //-------------------------------------------------
 //                     SETUP
 //-------------------------------------------------
@@ -135,8 +149,21 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 void setup(){
 
 
+
+	// Test DHT11:
+	dht11.DHT11_Init();
+	int16_t temp;
+	temp = dht11.readTemperature();
+	dht11.DHT11_Read_Sensor();
+
+
+
+
 	// Inicializar el actuador del paracaidas
 	cierre_paracaidas();
+	HAL_Delay(1000);
+	apertura_paracaidas();
+	HAL_Delay(1000);
 
 
 	// Inicializar sensores:
@@ -163,50 +190,7 @@ void setup(){
 	printDebugFloat(LM_Temp_Read(&hadc1));
 
 
-
-	// Test unitario SD
-//	Mount_SD("");
-//	Format_SD();
-//	Create_File("FILEA.TXT");
-//	Create_File("FILEB.TXT");
-//	Unmount_SD("");
-
-	// Test unitario GPS OK
-//	for(int i = 0; i < 20; i++){
-//		HAL_Delay(1000);
-//		printDebug("\nLAT: ");
-//		printDebug(GPS.dec_latitude);
-//		printDebug("\nLON: ");
-//		printDebug(GPS.dec_longitude);
-//	}
-
-	//  Buscar direcciones I2C
-//	I2C_Scan(&hi2c2);
-//	I2C_Scan(&hi2c3);
-
-	// Test unitario EEPROM OK
-//	if (eeprom.Setup() == true){
-//		printDebug("\nEEPROM OK");
-//	}
-//	else{
-//		printDebug("\nEEPROM NOT FOUND");
-//	}
-
-	// Test unitario BMP OK
-//	printDebug("\nTemperatura: ");
-//	printDebugFloat(s_presion.getTemperature());
-//	printDebug("\nPresion: ");
-//	printDebugFloat(s_presion.getPressure());
-//	printDebug("\nAltitud: ");
-//	printDebugFloat(s_presion.getAltitude());
-
-	// Test unitario Servo OK
-//	for(int i = 0; i < 5; i++){
-//		HAL_Delay(2000);
-//		apertura_paracaidas();
-//		HAL_Delay(2000);
-//		cierre_paracaidas();
-//	}
+	//test_unitarios();
 
 
 
@@ -223,11 +207,18 @@ void setup(){
 	while(GPS.dec_latitude == 0.0 || GPS.dec_longitude == 0.0){
 		HAL_Delay(1000);
 		printDebug("Esperando senal GPS ...");
+
+		// Hacer un print de todos los valores de los sensores:
 	}
 
-	// Listo para despegue
 
 
+	// Listo para despegue, esperar a detectar aceleración
+	printDebug("Senal GPS OK ...");
+	printDebug("Esperando a tetectar aceleración de despegue ...");
+	while(COND_DESPEGUE){
+		HAL_Delay(1);
+	}
 
 }
 
@@ -246,7 +237,7 @@ void loop(){
 
 
 	// DESPEGUE DEL COHETE E INICIO DE LA GRABACIÓN
-	if(COND_DESPEGUE_1 && COND_DESPEGUE_2 && COND_DESPEGUE_3 && !inicio_grabacion){
+	if(COND_DESPEGUE && !inicio_grabacion){
 		t_inicio = HAL_GetTick();
 		despegue = true;
 	}
@@ -284,11 +275,11 @@ void loop(){
 void cierre_paracaidas(){
 	paracaidas.setup(&servo_pin);
 	paracaidas.attach();
-	paracaidas.write(0);
+	paracaidas.write(20);
 }
 
 void apertura_paracaidas(){
-	paracaidas.write(180);
+	paracaidas.write(80);
 	fin_paracaidas = false;
 }
 
@@ -345,6 +336,64 @@ void read_save_data(){
 }
 
 
+
+void test_unitarios(){
+
+
+	// Test telemetría: OK
+//	char data_[60] = {};
+//	sprintf(data_, "Test Hola Mundo\n");
+//	HAL_UART_Transmit(&huart2, (uint8_t*)data_, strlen(data_), HAL_MAX_DELAY);
+//
+//	sprintf(data_, "Lectura de temperatura: %.3f\n", LM_Temp_Read(&hadc1));
+//	HAL_UART_Transmit(&huart2, (uint8_t*)data_, strlen(data_), HAL_MAX_DELAY);
+
+	// Test unitario SD, fallido
+//	Mount_SD("");
+//	Format_SD();
+//	Create_File("FILEA.TXT");
+//	Create_File("FILEB.TXT");
+//	Unmount_SD("");
+
+
+	// Test unitario GPS OK
+//	for(int i = 0; i < 20; i++){
+//		HAL_Delay(1000);
+//		printDebug("\nLAT: ");
+//		printDebug(GPS.dec_latitude);
+//		printDebug("\nLON: ");
+//		printDebug(GPS.dec_longitude);
+//	}
+
+	//  Buscar direcciones I2C
+//	I2C_Scan(&hi2c2);
+//	I2C_Scan(&hi2c3);
+
+	// Test unitario EEPROM OK
+//	if (eeprom.Setup() == true){
+//		printDebug("\nEEPROM OK");
+//	}
+//	else{
+//		printDebug("\nEEPROM NOT FOUND");
+//	}
+
+	// Test unitario BMP OK
+//	printDebug("\nTemperatura: ");
+//	printDebugFloat(s_presion.getTemperature());
+//	printDebug("\nPresion: ");
+//	printDebugFloat(s_presion.getPressure());
+//	printDebug("\nAltitud: ");
+//	printDebugFloat(s_presion.getAltitude());
+
+	// Test unitario Servo OK
+//	for(int i = 0; i < 5; i++){
+//		HAL_Delay(2000);
+//		apertura_paracaidas();
+//		HAL_Delay(2000);
+//		cierre_paracaidas();
+//	}
+
+}
 
 
 void savedata(uint8_t* dir_dato, uint8_t* dir, uint8_t size) {
