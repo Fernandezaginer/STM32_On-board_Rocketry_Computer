@@ -26,8 +26,8 @@ void EEPROM::ConfigUnitSave(uint8_t n_float, uint8_t n_uint32_t, uint8_t n_int32
 	this->n_int32_t = n_int32_t;
 	this->n_uint16_t = n_uint16_t;
 	this->n_int16_t = n_int16_t;
-	this->n_uint16_t = n_uint16_t;
-	this->n_int16_t = n_int16_t;
+	this->n_uint8_t = n_uint8_t;
+	this->n_int8_t = n_int8_t;
 
 	n_bytes = n_float*4 + n_uint32_t*4 + n_int32_t*4 + n_uint16_t*2 + n_int16_t*2 + n_int8_t + n_uint8_t;
 }
