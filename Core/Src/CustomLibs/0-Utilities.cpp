@@ -196,8 +196,8 @@ void printDebugIntHex(int aux) {
 	_write(0, str, i);
 }
 void printDebugFloat(float aux) {
-	char str[10];
-	sprintf(str, "%f", aux);
+	char str[30];
+	sprintf(str, "%.5e", aux);
 	int i = 0;
 	while (str[i] != '\0') {
 		i++;

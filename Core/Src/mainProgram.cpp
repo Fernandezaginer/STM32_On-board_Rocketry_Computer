@@ -170,17 +170,17 @@ void setup(){
 	// Inicializar el actuador del paracaidas
 	cierre_paracaidas();
 	HAL_Delay(1000);
-
 	LED_Init(&htim4);
 
 	// Configurar EEPROM:
+	eeprom.Setup();
 	eeprom.ConfigUnitSave(5,1,0,0,0,2,0);
 	eeprom.ConfigPointerSave(&data[32]);
-	eeprom.ConfigPointerTime(&(p_flight_time[20]));   // verificar funcionamiento
+	eeprom.ConfigPointerTime(p_flight_time);
 	eeprom.ConfigSpace(0.6, 0.4, TIEMPO_APOGEO_ESTIMADO, TIEMPO_VUELO_ESTIMADO);
 
 	// Read eeprom:
-	eeprom.PrintDebug();
+	//eeprom.PrintDebug();
 
 	// Configurar la telemetría:
 	telemetria.config_p_data_estados(&error_init_modulos, &espera_gps, &despegue, &caida);
@@ -234,6 +234,7 @@ void setup(){
 		telemetria.loop();
 		LED_Toggle(&htim4);
 	}
+	printDebug("Despegue\n");
 	LED_On(&htim4);
 	t_inicio = HAL_GetTick();
 	despegue = true;
@@ -249,6 +250,8 @@ void setup(){
 //                   LOOP
 //-------------------------------------------------
 
+uint32_t time = 0;
+bool fp = 0;
 
 
 void loop(){
@@ -260,14 +263,19 @@ void loop(){
 		alt_max = Altitud_BMP;  // Obtener la altura maxima del vuelo
 	}
 	if(COND_APERTURA_1 || COND_APERTURA_2){
-		BUZZ_Init(&htim3);
+		if(fp == 0){
+			fp = 1;
+			BUZZ_Init(&htim3);
+			printDebug("Apertura Paracaidas");
+		}
 		apertura_paracaidas();
 		despegue = false;
 		caida = true;
 	}
 
 
-	*p_flight_time = FLIGHT_TIME;
+	time = FLIGHT_TIME;
+	p_flight_time = &time;
 	read_save_data();
 	telemetria.loop();
 }

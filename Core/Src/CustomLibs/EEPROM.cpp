@@ -63,7 +63,7 @@ void EEPROM::writeEEPROM_Page(uint16_t address, uint8_t *val, uint8_t tam) {
 	for (int i = 0; i < tam; i++){
 		pdata[2+i] = val[i];
 	}
-	HAL_I2C_Master_Transmit(hi2c, EEPROM_I2C_ADDRESS << 1, pdata, 2+tam, 10);
+	HAL_I2C_Master_Transmit(hi2c, (EEPROM_I2C_ADDRESS << 1), pdata, 2+tam, 10);
 	free(pdata);
 }
 
@@ -77,15 +77,15 @@ uint8_t EEPROM::readEEPROM(uint32_t address) {
   buf[0] = (uint8_t)(address >> 8);       // MSB
   buf[1] = (uint8_t)(address & 0x00FF);   // LSB
 
-  HAL_I2C_Master_Transmit(hi2c, EEPROM_I2C_ADDRESS << 1, buf, 2, 10);
-  HAL_I2C_Master_Receive(hi2c, EEPROM_I2C_ADDRESS << 1, &rcvData, 1, 10);
+  HAL_I2C_Master_Transmit(hi2c, (EEPROM_I2C_ADDRESS << 1), buf, 2, 10);
+  HAL_I2C_Master_Receive(hi2c, (EEPROM_I2C_ADDRESS << 1)+1, &rcvData, 1, 10);
   return rcvData;
 }
 
 
 void EEPROM::readEEPROMpage(uint8_t* buffer, uint32_t address_start, uint8_t size){
 	for(int i = 0; i < size; i++){
-		buffer[i] = readEEPROM(address_start + 1);
+		buffer[i] = readEEPROM(address_start + i);
 	}
 }
 
@@ -103,7 +103,7 @@ void EEPROM::loop(bool despegue, bool caida){
 
 		// Realizar escritura si ha pasado el tiempo correspondiente
 		// (La eeprom tiene 32 Kb, sirve para poner un límite)
-		if(intervalo_despegue*n_ud_escritas < * flight_time){
+		if(intervalo_despegue*n_ud_escritas < (*(this->flight_time))){
 			// Escribir los valores
 
 			if(n_ud_escritas+1<n_ud_maximas){
@@ -146,6 +146,7 @@ void EEPROM::loop(bool despegue, bool caida){
 
 void EEPROM::PrintDebug(){
 
+
 	printDebug("Lectura de la memoria EEPROM por SWD:\n");
 	printDebug("\n");
 	printDebug("\n");
@@ -168,20 +169,23 @@ void EEPROM::PrintDebug(){
 
 
 	for(int i = 0; i < n_ud_maximas; i++){
-		printDebug(" - - - ");
-		uint8_t* data;
-		uint8_t dir_data = 0;
-		data = (uint8_t*)malloc((n_bytes) * sizeof(uint8_t));
-		for(int i = 0; i < 1; i++){
-			this->readEEPROMpage(data, n_ud_maximas*n_bytes, n_bytes);
-		}
+		uint8_t* data_read;
+		uint8_t dir_data;
+		dir_data = 0;
+		data_read = (uint8_t*)malloc((n_bytes) * sizeof(uint8_t));
+		this->readEEPROMpage(data_read, i*n_bytes, n_bytes);
+
+//		for(int j = 0; j < n_bytes; j++){
+//			printDebugInt((int)data_read[j]);
+//			printDebug("\n");
+//		}
 
 
 		// Print floats
 		if (n_float > 0){
 			for(int i = 0; i < n_float; i++){
 				float val;
-				this->_4byte_to_float(&(data[dir_data]), &val);
+				this->_4byte_to_float(&(data_read[dir_data]), &val);
 				printDebugFloat(val);
 				printDebug("\t");
 				dir_data=+4;
@@ -194,7 +198,7 @@ void EEPROM::PrintDebug(){
 			for(int i = 0; i < n_uint32_t; i++){
 				float val;
 				void _4byte_to_U32(uint8_t* aux, uint32_t *out);
-				this->_4byte_to_float(&(data[dir_data]), &val);
+				this->_4byte_to_float(&(data_read[dir_data]), &val);
 				printDebugFloat(val);
 				printDebug("\t");
 				dir_data=+4;
@@ -206,7 +210,7 @@ void EEPROM::PrintDebug(){
 		if (n_int32_t > 0){
 			for(int i = 0; i < n_int32_t; i++){
 				int32_t val;
-				this->_4byte_to_I32(&(data[dir_data]), &val);
+				this->_4byte_to_I32(&(data_read[dir_data]), &val);
 				printDebugFloat(val);
 				printDebug("\t");
 				dir_data=+4;
@@ -218,7 +222,7 @@ void EEPROM::PrintDebug(){
 		if (n_uint16_t > 0){
 			for(int i = 0; i < n_uint16_t; i++){
 				uint16_t val;
-				this->_2byte_to_U16(&(data[dir_data]), &val);
+				this->_2byte_to_U16(&(data_read[dir_data]), &val);
 				printDebugFloat(val);
 				printDebug("\t");
 				dir_data=+4;
@@ -230,7 +234,7 @@ void EEPROM::PrintDebug(){
 		if (n_int16_t > 0){
 			for(int i = 0; i < n_int16_t; i++){
 				int16_t val;
-				this->_2byte_to_I16(&(data[dir_data]), &val);
+				this->_2byte_to_I16(&(data_read[dir_data]), &val);
 				printDebugFloat(val);
 				printDebug("\t");
 				dir_data=+4;
@@ -242,8 +246,8 @@ void EEPROM::PrintDebug(){
 		if (n_uint8_t > 0){
 			for(int i = 0; i < n_uint8_t; i++){
 				uint8_t val;
-				this->_byte_to_U8(&(data[dir_data]), &val);
-				printDebugFloat(val);
+				this->_byte_to_U8(&(data_read[dir_data]), &val);
+				printDebugInt((int)val);
 				printDebug("\t");
 				dir_data=+4;
 			}
@@ -254,14 +258,14 @@ void EEPROM::PrintDebug(){
 		if (n_int8_t > 0){
 			for(int i = 0; i < n_int8_t; i++){
 				int8_t val;
-				this->_byte_to_I8(&(data[dir_data]), &val);
-				printDebugFloat(val);
+				this->_byte_to_I8(&(data_read[dir_data]), &val);
+				printDebugInt((int)val);
 				printDebug("\t");
 				dir_data=+4;
 			}
 		}
 
-		free(data);
+		free(data_read);
 
 
 		// Print \n
@@ -289,46 +293,46 @@ void EEPROM::Sd_Save(){
 // Conversión de los bytes a float
 void EEPROM::_4byte_to_float(uint8_t* aux, float *out) {
   uint32_t mem_aux = 0;
-  mem_aux |= aux[3];
-  mem_aux |= (uint32_t)(aux[2]) << 8;
-  mem_aux |= (uint32_t)(aux[1]) << 16;
-  mem_aux |= (uint32_t)(aux[0]) << 24;
+  mem_aux |= aux[0];
+  mem_aux |= (uint32_t)(aux[1]) << 8;
+  mem_aux |= (uint32_t)(aux[2]) << 16;
+  mem_aux |= (uint32_t)(aux[3]) << 24;
   *(out) = *((float*)&mem_aux);
 }
 
 
 void EEPROM::_4byte_to_U32(uint8_t* aux, uint32_t *out){
   uint32_t mem_aux = 0;
-  mem_aux |= aux[3];
-  mem_aux |= (uint32_t)(aux[2]) << 8;
-  mem_aux |= (uint32_t)(aux[1]) << 16;
-  mem_aux |= (uint32_t)(aux[0]) << 24;
+  mem_aux |= aux[0];
+  mem_aux |= (uint32_t)(aux[1]) << 8;
+  mem_aux |= (uint32_t)(aux[2]) << 16;
+  mem_aux |= (uint32_t)(aux[3]) << 24;
   *(out) = mem_aux;
 }
 
 
 void EEPROM::_4byte_to_I32(uint8_t* aux, int32_t *out){
 	int32_t mem_aux = 0;
-	mem_aux |= aux[3];
-	mem_aux |= (int32_t)(aux[2]) << 8;
-	mem_aux |= (int32_t)(aux[1]) << 16;
-	mem_aux |= (int32_t)(aux[0]) << 24;
+	mem_aux |= aux[0];
+	mem_aux |= (int32_t)(aux[1]) << 8;
+	mem_aux |= (int32_t)(aux[2]) << 16;
+	mem_aux |= (int32_t)(aux[3]) << 24;
 	*(out) = mem_aux;
 }
 
 
 void EEPROM::_2byte_to_U16(uint8_t* aux, uint16_t *out){
 	uint16_t mem_aux = 0;
-	mem_aux |= aux[1];
-	mem_aux |= (uint16_t)(aux[0]) << 8;
+	mem_aux |= aux[0];
+	mem_aux |= (uint16_t)(aux[1]) << 8;
 	*(out) = mem_aux;
 }
 
 
 void EEPROM::_2byte_to_I16(uint8_t* aux, int16_t *out){
 	int16_t mem_aux = 0;
-	mem_aux |= aux[1];
-	mem_aux |= (int16_t)(aux[0]) << 8;
+	mem_aux |= aux[0];
+	mem_aux |= (int16_t)(aux[1]) << 8;
 	*(out) = mem_aux;
 }
 

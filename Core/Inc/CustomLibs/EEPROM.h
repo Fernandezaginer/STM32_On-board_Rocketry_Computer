@@ -9,7 +9,7 @@
 #define _EEPROM_H_
 
 #define EEPROM_N_BYTES 32768       // 24FC512
-#define EEPROM_I2C_ADDRESS 0x50
+#define EEPROM_I2C_ADDRESS 80
 
 
 class EEPROM{
