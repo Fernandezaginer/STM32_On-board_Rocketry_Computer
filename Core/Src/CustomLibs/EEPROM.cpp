@@ -26,8 +26,8 @@ void EEPROM::ConfigUnitSave(uint8_t n_float, uint8_t n_uint32_t, uint8_t n_int32
 	this->n_int32_t = n_int32_t;
 	this->n_uint16_t = n_uint16_t;
 	this->n_int16_t = n_int16_t;
-	this->n_uint16_t = n_uint16_t;
-	this->n_int16_t = n_int16_t;
+	this->n_uint8_t = n_uint8_t;
+	this->n_int8_t = n_int8_t;
 
 	n_bytes = n_float*4 + n_uint32_t*4 + n_int32_t*4 + n_uint16_t*2 + n_int16_t*2 + n_int8_t + n_uint8_t;
 }
@@ -160,10 +160,30 @@ void EEPROM::PrintDebug(){
 
 
 	for(int i = 0; i < n_ud_maximas; i++){
-		printDebug(" - - - ");
-		for(int i = 0; i < 1; i++){
-			//this->readEEPROM();
+
+		for(int j = 0; j < n_float; j++){
+			uint8_t data[4] = {};
+			data[0] = this->readEEPROM(n_bytes*i+j*4);
+			data[1] = this->readEEPROM(n_bytes*i+j*4+1);
+			data[2] = this->readEEPROM(n_bytes*i+j*4+2);
+			data[3] = this->readEEPROM(n_bytes*i+j*4+3);
+			float val = 0.0;
+			this->_4byte_to_float(data, &val);
+			printDebugFloat(val);
+			printDebug(" \t");
 		}
+
+		for(int j = 0; j < n_uint32_t; j++){
+
+		}
+
+		for(int j = 0; j < n_uint8_t; j++){
+
+		}
+
+		printDebug("\r\n");
+
+		//this->readEEPROM();
 	}
 
 }

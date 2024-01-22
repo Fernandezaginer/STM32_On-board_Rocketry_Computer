@@ -68,7 +68,7 @@ private:
 	uint32_t t_aterrizaje;
 
 	// Celda de escritura en la eeprom
-	uint32_t n_ud_escritas;        // Numero de unidades de informacion escriras
+	uint32_t n_ud_escritas = 0;        // Numero de unidades de informacion escriras
 	uint32_t n_ud_maximas;         // Numero de unidades maximas de escritura
 
 	I2C_HandleTypeDef* hi2c;

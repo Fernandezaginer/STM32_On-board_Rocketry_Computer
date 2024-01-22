@@ -6,10 +6,14 @@
 #include "CustomLibs/Servo.h"
 #include "CustomLibs/EEPROM.h"
 #include "CustomLibs/PRESION.h"
+#include "CustomLibs/telemetria.h"
 #include "CustomLibs/Serial.h"
 #include "CustomLibs/GPS.h"
 #include "CustomLibs/LM35.h"
 #include "CustomLibs/DHT11.h"
+#include "CustomLibs/BUZZ.h"
+#include "CustomLibs/LED.h"
+#include "CustomLibs/acc.h"
 #include "CustomLibs/SD.h"
 #include "stdio.h"
 #include "math.h"
@@ -32,7 +36,7 @@ extern UART_HandleTypeDef huart2;
 //-------------------------------------------------
 //              Parámetros Cohete
 //-------------------------------------------------
-#define ACC_START             3.0          // g
+#define ACC_START             2.0          // g
 #define T_MIN_PARACAIDAS      5000         // ms
 #define T_MAX_PARACAIDAS      15000        // ms
 #define DIF_ALTURA_APERTURA   20.0         // m
@@ -58,10 +62,17 @@ bool inicio_grabacion = false;
 bool fin_paracaidas = false;
 bool fin_alarma = false;
 
+
+// Variables de estado
+bool error_init_modulos = false;
+bool espera_gps = true;
 bool despegue = false;
 bool caida = false;
 
-#define COND_DESPEGUE (abs(1.0) < ACC_START)
+// Aceleraciones MPU6050:
+float acc[3] = {};
+
+#define COND_DESPEGUE (abs(acc[2]) < ACC_START)
 
 
 
@@ -75,20 +86,20 @@ SERVO_PIN servo_pin = {&htim1, TIM_CHANNEL_1};
 Bmp280 s_presion = *(new Bmp280(&hi2c2));
 EEPROM eeprom = *(new EEPROM(&hi2c3));
 DHT11 dht11 = *(new DHT11(GPIOE, GPIO_PIN_1, &htim4));
+telemetria_uart telemetria = *(new telemetria_uart(&huart2));
 extern GPS_t GPS;
 
 
-//              EEPROM + SD                                          SOLO SD
-// [4]  [4]  [4]  [4]  [4]  [4]   [1]    [1]       [4]      [4]  [4]  [2]  [2]  [2]  [4]   [4]
-// LAT  LON  ALT  PRE  Az   TIME  PARAC  SATS      ALT_GPS  Ax   Ay   Gx   Gy   Gz   TEMP  HUM
-// F    F    F    F    F    U32   U8     U8
 
-// EEPROM: 26
-// SD:     52
+//              SOLO TELM                                           EEPROM + TELM
+//    [4]      [4]  [4]  [4]  [4]  [4]  [4]   [4]     [4]  [4]  [4]  [4]  [4]  [4]   [1]    [1]
+//    ALT_GPS  Ax   Ay   Gx   Gy   Gz   TEMP  HUM     LAT  LON  ALT  PRE  Az   TIME  PARAC  SATS
+//    F        F    F    F    F    F    F     F       F    F    F    F    F    U32   U8     U8
 
 
 // Lecturas:
-uint8_t* data = (uint8_t*)malloc(52*sizeof(uint8_t));
+#define SIZE_DATA 58
+uint8_t* data = (uint8_t*)malloc(SIZE_DATA*sizeof(uint8_t));
 
 
 float Altitud_BMP = 0.0;
@@ -107,6 +118,7 @@ uint32_t* p_flight_time;
 //                       Funciones
 //----------------------------------------------------------
 
+void read_data();
 void cierre_paracaidas();
 void apertura_paracaidas();
 bool init_modulos();
@@ -149,76 +161,79 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 void setup(){
 
 
-
-	// Test DHT11:
-	dht11.DHT11_Init();
-	int16_t temp;
-	temp = dht11.readTemperature();
-	dht11.DHT11_Read_Sensor();
-
-
-
+	//test_unitarios();
 
 	// Inicializar el actuador del paracaidas
 	cierre_paracaidas();
 	HAL_Delay(1000);
-	apertura_paracaidas();
-	HAL_Delay(1000);
 
+	LED_Init(&htim4);
 
-	// Inicializar sensores:
+	// Configurar EEPROM:
+	eeprom.ConfigUnitSave(5,1,0,0,0,2,0);
+	eeprom.ConfigPointerSave(&data[32]);
+	eeprom.ConfigPointerTime(&(p_flight_time[20]));   // verificar funcionamiento
+	eeprom.ConfigSpace(0.6, 0.4, TIEMPO_APOGEO_ESTIMADO, TIEMPO_VUELO_ESTIMADO);
+
+	// Read eeprom:
+	eeprom.PrintDebug();
+
+	// Configurar la telemetría:
+	telemetria.config_p_data_estados(&error_init_modulos, &espera_gps, &despegue, &caida);
+	telemetria.config_pdata(data);
+
+	// clear pdata:
+	for (int i = 0; i < SIZE_DATA; i++){
+		data[i] = 0;
+	}
+
+	// -------------------------------------------
+	//       FASE 1 Inicializar sensores:
+	// -------------------------------------------
+
 	if(!init_modulos()){
+		error_init_modulos = true;
 		while(true){
-			// Parpadear led error
+			printDebug("[Error de inicializacion]");
+			telemetria.loop();
+			HAL_Delay(100);
+			LED_Toggle(&htim4);
 		}
 	}
 
 
-	// Test UART 1
-
-	for(int i = 0; i < 30; i++){
-		char str[50] = {};
-		float val = 23.1;
-		sprintf(str, "Lectura de valor: \r\n");
-		HAL_UART_Transmit(&huart1, (uint8_t*)str, strlen(str), 10);
-		HAL_Delay(1000);
-	}
 
 
-	// Test unitario LM35:
-	printDebug("Temperatura: ");
-	printDebugFloat(LM_Temp_Read(&hadc1));
+	// -------------------------------------------
+	//       FASE 2    Señal GPS:
+	// -------------------------------------------
 
-
-	//test_unitarios();
-
-
-
-
-	// Configurar EEPROM:
-	eeprom.ConfigUnitSave(5,1,0,0,0,2,0);
-	eeprom.ConfigPointerSave(data);
-	eeprom.ConfigPointerTime(&(p_flight_time[20]));   // verificar funcionamiento
-	eeprom.ConfigSpace(0.6, 0.4, TIEMPO_APOGEO_ESTIMADO, TIEMPO_VUELO_ESTIMADO);
-
-
-
-	// Espera a obtener cobertura GPS
+	printDebug("Esperando senal GPS ...\n");
 	while(GPS.dec_latitude == 0.0 || GPS.dec_longitude == 0.0){
-		HAL_Delay(1000);
-		printDebug("Esperando senal GPS ...");
-
-		// Hacer un print de todos los valores de los sensores:
+		read_data();
+		telemetria.loop();
 	}
 
+
+
+
+	// -------------------------------------------
+	//       FASE 3   Esperar a despegue:
+	// -------------------------------------------
 
 
 	// Listo para despegue, esperar a detectar aceleración
-	printDebug("Senal GPS OK ...");
-	printDebug("Esperando a tetectar aceleración de despegue ...");
+	espera_gps = false;
+	printDebug("Senal GPS OK ...\n");
+	printDebug("Esperando a tetectar aceleración de despegue ...\n");
 	while(COND_DESPEGUE){
-		HAL_Delay(1);
+		read_data();
+		telemetria.loop();
+		LED_Toggle(&htim4);
 	}
+	LED_On(&htim4);
+	t_inicio = HAL_GetTick();
+	despegue = true;
 
 }
 
@@ -236,17 +251,13 @@ void setup(){
 void loop(){
 
 
-	// DESPEGUE DEL COHETE E INICIO DE LA GRABACIÓN
-	if(COND_DESPEGUE && !inicio_grabacion){
-		t_inicio = HAL_GetTick();
-		despegue = true;
-	}
 
 	// CONTROL DEL PARACAIDAS
 	if (Altitud_BMP > alt_max && despegue && (FLIGHT_TIME > T_MIN_PARACAIDAS)) {
 		alt_max = Altitud_BMP;  // Obtener la altura maxima del vuelo
 	}
-	if(COND_APERTURA_1 && COND_APERTURA_2){
+	if(COND_APERTURA_1 || COND_APERTURA_2){
+		BUZZ_Init(&htim3);
 		apertura_paracaidas();
 		despegue = false;
 		caida = true;
@@ -255,8 +266,7 @@ void loop(){
 
 	*p_flight_time = FLIGHT_TIME;
 	read_save_data();
-
-
+	telemetria.loop();
 }
 
 
@@ -285,6 +295,8 @@ void apertura_paracaidas(){
 
 bool init_modulos(){
 	bool test_ok = true;
+	MPU6050_Init(&hi2c2);
+	GPS_Init();
 	if(!eeprom.Setup()){
 		printDebug("[ERROR] Inicializacion memoria EEPROM\n\n");
 		test_ok = false;
@@ -300,33 +312,41 @@ bool init_modulos(){
 }
 
 
+
+void read_data(){
+
+	//              SOLO TELM                                           EEPROM + TELM
+	//    [4]      [4]  [4]  [4]  [4]  [4]  [4]   [4]     [4]  [4]  [4]  [4]  [4]  [4]   [1]    [1]
+	//    ALT_GPS  Ax   Ay   Gx   Gy   Gz   TEMP  HUM     LAT  LON  ALT  PRE  Az   TIME  PARAC  SATS
+	//    F        F    F    F    F    F    F     F       F    F    F    F    F    U32   U8     U8
+
+
+	MPU6050_Read_Accel(&hi2c2, acc);
+
+	 saveFloat(GPS.altitude_ft, (uint8_t*)&data[0]);
+	 saveFloat(acc[0], (uint8_t*)&data[4]);
+	 saveFloat(acc[1], (uint8_t*)&data[8]);
+	 saveFloat(0.0, (uint8_t*)&data[12]);
+	 saveFloat(0.0, (uint8_t*)&data[16]);
+	 saveFloat(0.0, (uint8_t*)&data[20]);
+	 saveFloat(LM_Temp_Read(&hadc1), (uint8_t*)&data[24]);
+	 saveFloat(0.0, (uint8_t*)&data[28]);
+
+	 saveFloat(GPS.dec_latitude, (uint8_t*)&data[32]);
+	 saveFloat(GPS.dec_longitude, (uint8_t*)&data[36]);
+	 saveFloat(s_presion.getAltitude(), (uint8_t*)&data[40]);
+	 saveFloat(s_presion.getPressure(), (uint8_t*)&data[44]);
+	 saveFloat(acc[2], (uint8_t*)&data[48]);
+	 saveUint32(FLIGHT_TIME, (uint8_t*)&data[52]);
+	 saveUint8((uint8_t)caida, (uint8_t*)&data[56]);
+	 saveUint8((uint8_t)GPS.satelites, (uint8_t*)&data[57]);
+
+}
+
+
 void read_save_data(){
 
-
-//              EEPROM + SD                                          SOLO SD
-// [4]  [4]  [4]  [4]  [4]  [4]   [1]    [1]       [4]      [4]  [4]  [2]  [2]  [2]  [4]   [4]
-// LAT  LON  ALT  PRE  Az   TIME  PARAC  SATS      ALT_GPS  Ax   Ay   Gx   Gy   Gz   TEMP  HUM
-// F    F    F    F    F    U32   U8     U8
-
-
-
-// saveUint32(float val, data[0])
-// saveFloat(float val, data[4])
-// saveFloat(float val, data[8])
-// saveUint8(float val, data[12])
-// saveFloat(float val, data[16])
-// saveFloat(float val, data[20])
-// saveFloat(float val, data[24])
-// saveInt16(float val, data[25])
-// saveUint8(float val, data[26])
-// saveFloat(float val, data[30])
-// saveFloat(float val, data[34])
-// saveFloat(float val, data[38])
-// saveInt16(float val, data[40])
-// saveInt16(float val, data[42])
-// saveFloat(float val, data[44])
-// saveFloat(float val, data[48])
-
+	read_data();
 
 	// EEPROM write
 	eeprom.loop(despegue, caida);
@@ -348,13 +368,19 @@ void test_unitarios(){
 //	sprintf(data_, "Lectura de temperatura: %.3f\n", LM_Temp_Read(&hadc1));
 //	HAL_UART_Transmit(&huart2, (uint8_t*)data_, strlen(data_), HAL_MAX_DELAY);
 
+
+	// Test DHT11, fallido
+//	dht11.DHT11_Init();
+//	int16_t temp;
+//	temp = dht11.readTemperature();
+//	dht11.DHT11_Read_Sensor();
+
 	// Test unitario SD, fallido
 //	Mount_SD("");
 //	Format_SD();
 //	Create_File("FILEA.TXT");
 //	Create_File("FILEB.TXT");
 //	Unmount_SD("");
-
 
 	// Test unitario GPS OK
 //	for(int i = 0; i < 20; i++){
@@ -421,7 +447,7 @@ void saveUint16(uint16_t val, uint8_t* dir){
   savedata((uint8_t*)&val, dir, 2);
 }
 
-void saveInt16(int16_t val, uint8_t* dir){
+void Float(int16_t val, uint8_t* dir){
   savedata((uint8_t*)&val, dir, 2);
 }
 

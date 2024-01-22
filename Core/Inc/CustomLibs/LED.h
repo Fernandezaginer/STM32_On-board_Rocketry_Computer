@@ -14,7 +14,7 @@
 #define __LED_H__
 
 
-#define PERIOD 500	//Ajustar en funcion de la configuración del timer
+#define PERIOD 10000 //Ajustar en funcion de la configuración del timer
 
 void LED_Init(TIM_HandleTypeDef* htim);
 
