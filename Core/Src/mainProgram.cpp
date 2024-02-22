@@ -180,7 +180,7 @@ void setup(){
 	eeprom.ConfigSpace(0.6, 0.4, TIEMPO_APOGEO_ESTIMADO, TIEMPO_VUELO_ESTIMADO);
 
 	// Read eeprom:
-	//eeprom.PrintDebug();
+	eeprom.PrintDebug();
 
 	// Configurar la telemetría:
 	telemetria.config_p_data_estados(&error_init_modulos, &espera_gps, &despegue, &caida);
@@ -312,10 +312,10 @@ bool init_modulos(){
 		printDebug("[ERROR] Inicializacion memoria EEPROM\n\n");
 		test_ok = false;
 	}
-	if(!s_presion.init()){
-		printDebug("[ERROR] Inicializacion sesnor PRESION\n\n");
-		test_ok = false;
-	}
+//	if(!s_presion.init()){
+//		printDebug("[ERROR] Inicializacion sesnor PRESION\n\n");
+//		test_ok = false;
+//	}
 	if(test_ok){
 		printDebug("INICIALIZACION DE TODOS LOS SENSORES CORRECTA\n\n");
 	}
@@ -344,8 +344,8 @@ void read_data(){
 
 	 saveFloat(GPS.dec_latitude, (uint8_t*)&data[32]);
 	 saveFloat(GPS.dec_longitude, (uint8_t*)&data[36]);
-	 saveFloat(s_presion.getAltitude(), (uint8_t*)&data[40]);
-	 saveFloat(s_presion.getPressure(), (uint8_t*)&data[44]);
+	 saveFloat(0.0, (uint8_t*)&data[40]);
+	 saveFloat(0.0, (uint8_t*)&data[44]);
 	 saveFloat(acc[2], (uint8_t*)&data[48]);
 	 saveUint32(FLIGHT_TIME, (uint8_t*)&data[52]);
 	 saveUint8((uint8_t)caida, (uint8_t*)&data[56]);

@@ -73,12 +73,13 @@ void EEPROM::writeEEPROM_Page(uint16_t address, uint8_t *val, uint8_t tam) {
 uint8_t EEPROM::readEEPROM(uint32_t address) {
   uint8_t rcvData = 0xFF;
 
-  uint8_t buf[2] = {};
-  buf[0] = (uint8_t)(address >> 8);       // MSB
-  buf[1] = (uint8_t)(address & 0x00FF);   // LSB
+  HAL_I2C_Mem_Read(hi2c, (EEPROM_I2C_ADDRESS << 1), (uint16_t)address, 2, &rcvData, 1, HAL_MAX_DELAY);
 
-  HAL_I2C_Master_Transmit(hi2c, (EEPROM_I2C_ADDRESS << 1), buf, 2, 10);
-  HAL_I2C_Master_Receive(hi2c, (EEPROM_I2C_ADDRESS << 1)+1, &rcvData, 1, 10);
+//  uint8_t buf[2] = {};
+//  buf[0] = (uint8_t)(address >> 8);       // MSB
+//  buf[1] = (uint8_t)(address & 0x00FF);   // LSB
+//  HAL_I2C_Master_Transmit(hi2c, (EEPROM_I2C_ADDRESS << 1)+1, buf, 2, 10);
+//  HAL_I2C_Master_Receive(hi2c, (EEPROM_I2C_ADDRESS << 1), &rcvData, 1, 10);
   return rcvData;
 }
 
@@ -151,21 +152,24 @@ void EEPROM::PrintDebug(){
 	printDebug("\n");
 	printDebug("\n");
 	printDebug("Contenido de la memoria:\n");
-	printDebug("\nNº Floats:");
+	printDebug("\nN Floats:");
 	printDebugInt((int)n_float);
-	printDebug("\nNº Uint32:");
+	printDebug("\nN Uint32:");
 	printDebugInt((int)n_uint32_t);
-	printDebug("\nNº Int32:");
+	printDebug("\nN Int32:");
 	printDebugInt((int)n_int32_t);
-	printDebug("\nNº Uint16:");
+	printDebug("\nN Uint16:");
 	printDebugInt((int)n_uint16_t);
-	printDebug("\nNº Int16:");
+	printDebug("\nN Int16:");
 	printDebugInt((int)n_int16_t);
-	printDebug("\nNº Uint8:");
+	printDebug("\nN Uint8:");
 	printDebugInt((int)n_uint8_t);
-	printDebug("\nNº Int8:");
+	printDebug("\nN Int8:");
 	printDebugInt((int)n_int8_t);
 	printDebug("\n\n\n");
+
+	uint8_t dp[2] = {1,2};
+	this->writeEEPROM_Page(0, dp, 2);
 
 
 	for(int i = 0; i < n_ud_maximas; i++){
