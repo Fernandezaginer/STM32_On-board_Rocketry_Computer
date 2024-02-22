@@ -24,6 +24,8 @@ Andrés Fernández Muñoz (55237) <br>
 
 
 
+<div align="left">
+  
 Devices list: <br>
 
 BUTTON ON/OF	Grabación de datos <br>
