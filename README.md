@@ -28,13 +28,13 @@ LED		Pablo & Sara <br>
 
 
 <div align="center">
-<img src="Montaje.jpg" alt="Montaje" display="block" margin-left="auto"  margin-right="auto" width="50%">
+<img src="Media/Montaje.jpg" alt="Montaje" display="block" margin-left="auto"  margin-right="auto" width="50%">
 <p>Montaje</p>
 <br>
 
 
 <div align="center">
-<img src="Cohetes.jpg" alt="Cohetes" display="block" margin-left="auto"  margin-right="auto" width="50%">
+<img src="Media/Cohetes.jpg" alt="Cohetes" display="block" margin-left="auto"  margin-right="auto" width="50%">
 <p>Rockets</p>
 <br>
 
